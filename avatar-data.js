@@ -1,0 +1,3 @@
+window.AVATAR_DATA=[{"id":"avatar-1","name":"礼服客 · 一","source":"用户提供","url":"assets/avatars/ref-01.jpg"},{"id":"avatar-2","name":"验牌客","source":"用户提供","url":"assets/avatars/ref-02.jpg"},{"id":"avatar-3","name":"桌边客","source":"用户提供","url":"assets/avatars/ref-03.jpg"},{"id":"avatar-4","name":"金色团子","source":"用户提供","url":"assets/avatars/ref-04.jpg"},{"id":"avatar-5","name":"绯金荷官","source":"原创生成","url":"assets/avatars/original-crimson.png"},{"id":"avatar-6","name":"银夜牌手","source":"原创生成","url":"assets/avatars/original-silver.png"}];
+
+for(const c of window.AVATAR_DATA)c.url=window.MIRAGE_CDN.url(c.url.replace("avatars/","avatars-small/").replace(/\.(?:jpg|png)$/,".webp"));

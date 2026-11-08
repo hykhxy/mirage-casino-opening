@@ -1,0 +1,45 @@
+/* Video foyer, off-axis gilt invitation, compact portrait fan and two audio buses. */
+#welcomeScreen{position:absolute;inset:0;z-index:90;isolation:isolate;background:#100905;overflow:hidden;perspective:1400px}
+#welcomeScreen[hidden]{display:none!important}
+#welcomeVideo{position:absolute;inset:0;width:100%;height:100%;object-fit:cover;filter:saturate(1.06) brightness(.76)}
+.welcome-shade{position:absolute;inset:0;background:linear-gradient(0deg,#0b0806bf,transparent 50%,#0e08084a),radial-gradient(ellipse at 51% 45%,transparent 17%,#1608074d 80%);pointer-events:none}
+.welcome-line{position:absolute;inset:7% 5%;border:1px solid #e4c88244;transform:rotate(-1.7deg);pointer-events:none;box-shadow:0 0 0 9px #2817091c}
+.welcome-mark{position:absolute;left:6%;top:7%;font:400 clamp(16px,2cqw,27px)/1.5 "Noto Serif SC","SimSun",serif;color:#f4d8a0;letter-spacing:.35em;text-shadow:0 2px 15px #000}
+.welcome-mark span{display:block;font:9px Georgia;letter-spacing:.25em;color:#cdb68b;margin-top:10px}
+#videoSound{position:absolute;right:6%;top:7%;font-size:11px;letter-spacing:.15em;background:#170d06b3}
+#welcomeEnter{position:absolute;left:50%;top:51%;translate:-50% -50%;transform:rotate(-2deg) rotateY(-5deg);display:flex;flex-direction:column;align-items:flex-start;gap:24px;padding:28px 38px 25px;background:linear-gradient(120deg,#2c190cbf,#170d08a6);backdrop-filter:blur(8px);border:1px solid #e6c789aa;color:#f5dfaf;cursor:pointer;box-shadow:10px 20px 65px #0008,inset 0 0 0 5px #1d100a55;max-width:85%;text-align:left;transition:transform .5s,box-shadow .5s}
+#welcomeEnter:hover{transform:rotate(-.4deg) rotateY(0deg) translateY(-3px);box-shadow:10px 20px 80px #e4b05e2b}
+#welcomeEnter>small{font:10px "Noto Serif SC",serif;color:#c8ac79;letter-spacing:.5em}
+#welcomeEnter>span{font:400 clamp(25px,3.6cqw,52px)/1.6 "Noto Serif SC","SimSun",serif;letter-spacing:.13em;max-width:14em;text-shadow:0 3px 25px #ad783b40}
+#welcomeEnter>b{align-self:flex-end;font:10px Georgia;letter-spacing:.24em;color:#d8ba82}
+.welcome-side{position:absolute;right:7%;bottom:20%;writing-mode:vertical-rl;letter-spacing:.5em;font-size:12px;color:#d9bd85;text-shadow:0 1px 8px #000}
+.welcome-note{position:absolute;bottom:6%;left:7%;font-size:10px;letter-spacing:.25em;color:#c6af89;text-shadow:0 1px 8px #000}
+#loader.prewelcome{visibility:hidden;pointer-events:none}
+#loadSkip{font-size:12px;letter-spacing:.13em;padding:11px 17px;margin-top:18px;display:block!important;background:#51301e80}
+#musicDock{position:absolute;right:2cqw;bottom:1.4cqh;z-index:70;display:flex;align-items:center;gap:8px;max-width:63cqw;background:#170e09dc;border:1px solid #92704770;color:#cbae77;padding:7px 10px;backdrop-filter:blur(10px);box-shadow:3px 7px 22px #0007;transform:rotate(-.6deg);box-sizing:border-box}
+#musicDock button{border:1px solid #9e7b42;background:#2c1b10;color:#e8cc90;width:29px;height:27px;cursor:pointer;font:13px Georgia}
+#musicDock select{max-width:23cqw;min-width:70px;background:#24160d;color:#d0b589;border:0;font:10px/1.5 "Noto Serif SC",serif;padding:3px}
+#musicDock label{display:flex;align-items:center;gap:5px;font-size:9px;white-space:nowrap;color:#9e8763}
+#musicDock input[type=range]{width:52px;accent-color:#b79152;height:12px;cursor:pointer;margin:0}
+#backgroundLoad{position:absolute;left:2cqw;bottom:2cqh;z-index:70;padding:7px 11px;background:#25150edc;border:1px solid #98723e77;color:#c8a86e;font:10px "Noto Serif SC",serif;letter-spacing:.08em;cursor:pointer}
+#backgroundLoad[hidden]{display:none}.warn{color:#ecb27a!important}
+.avatarPicker{width:100%;box-sizing:border-box;padding:16px 8px 8px;max-width:440px;margin:0 auto}
+.avatarHead{display:flex;justify-content:space-between;gap:10px;align-items:baseline;margin-bottom:12px}.avatarHead b{font-size:13px;font-weight:400;color:#e4c68c;letter-spacing:.15em}.avatarHead small{font-size:9px;color:#a88c63}
+.avatarChoices{display:flex;flex-wrap:wrap;justify-content:center;gap:13px 10px;padding:6px 4px 12px}
+.avatarChoice{position:relative;width:64px;flex:0 0 64px;padding:3px;border:1px solid #987244;background:#28180e;cursor:pointer;transform:rotate(-4deg);transition:transform .25s,box-shadow .25s;color:#ddc18d;box-shadow:3px 5px 12px #0005}
+.avatarChoice:nth-child(2n){transform:rotate(3deg) translateY(6px)}.avatarChoice:nth-child(3n){transform:rotate(-1deg) translateY(-3px)}
+.avatarChoice img{display:block;width:56px;height:56px;object-fit:cover;object-position:center 35%;background:#302319;border-radius:2px}.avatarChoice span{display:block;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;font:9px/1.5 "Noto Serif SC",serif;padding-top:4px;max-width:58px}
+.avatarChoice.selected{border-color:#ffe2a1;box-shadow:0 0 0 1px #caa96e,0 0 20px #d19b4c44;transform:translateY(-5px) rotate(0)}
+.avatarChoice:focus-visible,#welcomeEnter:focus-visible{outline:2px solid #ffe4a1;outline-offset:5px}
+#scCreate .crLeft{overflow-y:auto;overscroll-behavior:contain;scrollbar-width:thin;scrollbar-color:#997441 #201008;padding-bottom:45px;box-sizing:border-box}
+#scCreate .mirror{flex-shrink:0}#scCreate .whisper{margin-top:10px;font-size:clamp(12px,1.2cqw,17px)}
+@container (max-aspect-ratio:4/5){#welcomeEnter{padding:22px 23px;gap:19px;max-width:84%;width:78%;box-sizing:border-box}#welcomeEnter>span{font-size:28px;line-height:1.75;max-width:10em}.welcome-mark{top:8%;font-size:17px}#videoSound{top:16%;font-size:9px;right:7%}.welcome-side{bottom:17%;font-size:10px}.welcome-note{font-size:9px;max-width:75%;line-height:2}.welcome-line{inset:5% 5%}#musicDock{right:3cqw;bottom:1cqh;max-width:94cqw;gap:6px;padding:6px 8px}#musicDock select{max-width:29cqw;font-size:9px}#musicDock label{font-size:8px;gap:3px}#musicDock input[type=range]{width:35px}#backgroundLoad{bottom:7cqh;font-size:9px}.avatarPicker{padding:12px 2px 6px}.avatarHead{flex-direction:column;gap:3px}.avatarChoice{width:48px;flex-basis:48px}.avatarChoice img{width:40px;height:40px}.avatarChoice span{max-width:42px;font-size:8px}.avatarChoices{gap:12px 8px}#scCreate .crLeft{padding-bottom:40px}}
+@container (max-height:480px) and (min-aspect-ratio:4/5){#welcomeEnter{padding:15px 25px;gap:12px;max-width:70%}#welcomeEnter>span{font-size:30px}.welcome-mark{top:6%;font-size:16px}#videoSound{top:6%;font-size:9px}.welcome-mark span{font-size:8px;margin-top:4px}.welcome-side{font-size:9px}.welcome-note{font-size:8px}#musicDock{padding:3px 7px;bottom:1cqh;gap:5px}#musicDock button{width:24px;height:21px}#musicDock select{font-size:9px}#musicDock input[type=range]{width:38px}#backgroundLoad{font-size:8px;padding:4px 7px}.avatarChoice{width:45px;flex-basis:45px}.avatarChoice img{width:37px;height:37px}.avatarChoice span{font-size:8px;max-width:39px}.avatarHead b{font-size:10px}.avatarPicker{padding-top:8px}.avatarChoices{gap:10px 8px}.avatarHead small{font-size:8px}}
+@media(prefers-reduced-motion:reduce){#welcomeEnter,.avatarChoice{transition:none;transform:none}}
+#scCreate .crWrap{padding-bottom:max(60px,7cqh)}
+#scWorld:not(.off) ~ #musicDock:not(:focus-within) select,
+#scWorld:not(.off) ~ #musicDock:not(:focus-within) label,
+#scCatalog:not(.off) ~ #musicDock:not(:focus-within) select,
+#scCatalog:not(.off) ~ #musicDock:not(:focus-within) label{display:none}
+
+#assetLine{max-width:92px;width:92px;min-width:0}#musicDock{max-width:calc(100% - 20px);flex-wrap:wrap}html.lite #musicDock{gap:5px}html.lite #musicTrack{max-width:145px}

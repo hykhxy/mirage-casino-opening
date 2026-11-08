@@ -1,0 +1,1334 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover,user-scalable=no">
+<title>开端</title>
+<script src="delivery.js"></script>
+<link rel="stylesheet" href="game.css">
+
+<style>
+*{box-sizing:border-box}
+html,body{margin:0;height:100%;background:#000;overflow:hidden;touch-action:none}
+body{font-family:"Noto Serif SC","Songti SC","STSong","SimSun",serif;color:#f6e3b4;-webkit-tap-highlight-color:transparent;user-select:none;-webkit-user-select:none}
+img{-webkit-user-drag:none;user-select:none}
+
+/* 舞台：本地坐标系；手机竖屏可强制旋转为横屏 */
+#app{position:fixed;left:0;top:0;overflow:hidden;background:#000;container-type:size;transform-origin:0 0}
+.scene{position:absolute;inset:0;overflow:hidden}
+.off{display:none!important}
+.px{position:absolute;inset:0;pointer-events:none;will-change:transform}
+.box{position:absolute}
+
+/* ================= 开场 / 大厅 ================= */
+#cam{position:absolute;inset:0;transform-origin:0 0;will-change:transform}
+#world #bgImg{position:absolute;inset:0;width:100%;height:100%;filter:brightness(.4) saturate(.9) blur(2px)}
+#hot{position:absolute;inset:0;width:100%;height:100%;pointer-events:none;overflow:visible}
+#hot.on{pointer-events:auto}
+.tbl{fill:rgba(255,215,140,0);stroke:rgba(255,226,160,0);stroke-width:1.6;vector-effect:non-scaling-stroke;cursor:pointer;transition:fill .5s,stroke .5s,filter .5s;pointer-events:none}
+#hot.on .tbl{pointer-events:all}
+.tbl.hover,.tbl.ping{fill:url(#hotFill);stroke:rgba(255,232,170,.95);filter:drop-shadow(0 0 6px rgba(255,200,100,.9))}
+#tblTag{position:absolute;transform:translate(-50%,-100%);pointer-events:none;opacity:0;transition:opacity .4s,transform .5s cubic-bezier(.2,.8,.2,1);display:flex;flex-direction:column;align-items:center}
+#tblTag.on{opacity:1;transform:translate(-50%,calc(-100% - 6px))}
+#tblTag b{font:400 clamp(16px,2.3cqh,26px)/1 "Ma Shan Zheng","KaiTi",serif;writing-mode:vertical-rl;letter-spacing:.35em;color:#fff1cc;text-shadow:0 0 12px rgba(255,190,90,.9),0 2px 4px #000;padding:.35em .25em;background:radial-gradient(ellipse at 50% 50%,rgba(40,8,2,.6),transparent 70%)}
+#tblTag i{width:1px;height:clamp(18px,3.4cqh,40px);background:linear-gradient(#ffe3a0,transparent)}
+#fgCam{position:absolute;inset:0;transform-origin:50% 50%;will-change:transform,opacity}
+#fg{position:absolute;opacity:0;filter:blur(1.4px) saturate(1.05)}
+#fg img{width:100%;height:100%;display:block}
+#shafts{position:absolute;inset:0;opacity:0;mix-blend-mode:screen;pointer-events:none;
+  background:
+   linear-gradient(105deg,transparent 18%,rgba(255,214,140,.16) 24%,transparent 31%),
+   linear-gradient(98deg,transparent 40%,rgba(255,225,160,.12) 46%,transparent 52%),
+   linear-gradient(80deg,transparent 58%,rgba(255,206,130,.14) 64%,transparent 71%),
+   radial-gradient(ellipse 60% 45% at 50% 20%,rgba(255,215,140,.22),transparent 70%);
+  animation:shaft 9s ease-in-out infinite alternate}
+@keyframes shaft{from{filter:brightness(.8)}to{filter:brightness(1.25)}}
+#vignette{position:absolute;inset:0;pointer-events:none;background:radial-gradient(ellipse 75% 70% at 50% 48%,transparent 55%,rgba(8,2,0,.55) 85%,rgba(0,0,0,.85))}
+#dark{position:absolute;inset:0;background:#000;opacity:.35;pointer-events:none}
+.front{position:absolute;top:-5%;bottom:-5%;width:22cqw;transform:translateX(-50%);opacity:0;mix-blend-mode:screen;pointer-events:none;
+  background:radial-gradient(ellipse 50% 60% at 50% 50%,rgba(255,226,150,.85),rgba(255,180,80,.35) 40%,transparent 72%);filter:blur(6px)}
+
+#pxCurt{z-index:10}
+.curtain{position:absolute;top:0;height:100%;width:51.6cqw}
+.curtain.l{left:0;z-index:2}
+.curtain.r{right:0;z-index:1}
+.drop{position:absolute;inset:0;transform:translateY(-135%)}
+.sway{position:absolute;inset:0;transform-origin:50% 0;animation:breathe 7s ease-in-out infinite}
+.r .sway{animation-delay:-3.2s}
+@keyframes breathe{0%,100%{transform:skewX(0) scaleY(1)}50%{transform:skewX(.35deg) scaleY(1.004)}}
+.cimg{position:absolute;background:var(--img-curtain) center/100% 100% no-repeat;filter:drop-shadow(0 18px 30px rgba(0,0,0,.7))}
+.l .cimg{right:0}
+.r .cimg{left:0;transform:scaleX(-1)}
+.cimg::after{content:"";position:absolute;left:0;right:0;top:0;bottom:22%;pointer-events:none;
+  background:linear-gradient(90deg,rgba(0,0,0,.35),transparent 18%,transparent 74%,rgba(20,0,0,.55) 97%,rgba(0,0,0,.75))}
+#seamGlow{position:absolute;left:50%;top:-5%;bottom:-5%;width:12cqw;transform:translateX(-50%) scaleX(.2);opacity:0;z-index:3;mix-blend-mode:screen;pointer-events:none;
+  background:radial-gradient(ellipse 18% 48% at 50% 44%,rgba(255,250,225,1),rgba(255,226,150,0) 100%),
+    radial-gradient(ellipse 50% 58% at 50% 42%,rgba(255,220,140,.9),rgba(255,170,70,.45) 38%,rgba(160,60,10,0) 76%);filter:blur(7px)}
+
+#pxRays{z-index:12}
+#rays{position:absolute;left:50%;top:42%;width:240cqmax;height:240cqmax;margin:-120cqmax 0 0 -120cqmax;opacity:0;mix-blend-mode:screen;filter:blur(3px);
+  background:repeating-conic-gradient(from 0deg,rgba(255,214,130,0) 0deg,rgba(255,226,160,.30) 4deg,rgba(255,214,130,0) 9deg,rgba(255,214,130,0) 13deg);
+  -webkit-mask-image:radial-gradient(circle,#000 0%,rgba(0,0,0,.6) 14%,transparent 42%);mask-image:radial-gradient(circle,#000 0%,rgba(0,0,0,.6) 14%,transparent 42%);
+  animation:spin 60s linear infinite}
+@keyframes spin{to{transform:rotate(360deg)}}
+#flash{position:absolute;inset:0;z-index:30;opacity:0;pointer-events:none;mix-blend-mode:screen;
+  background:radial-gradient(ellipse 60% 60% at 50% 45%,rgba(255,248,225,1),rgba(255,210,120,.65) 40%,rgba(255,170,60,0) 80%)}
+
+#pxBeauty{z-index:17}
+#pxBeauty.behind{z-index:13}
+#beauty{position:absolute;height:min(66cqh,105cqw);aspect-ratio:2/3;top:-5cqh;left:48%;translate:-46% 0;opacity:0;transform-origin:50% 0}
+#beauty img,#pov img{width:100%;height:100%;display:block;pointer-events:none}
+#beauty img{-webkit-mask-image:linear-gradient(to bottom,transparent 0%,#000 26%);mask-image:linear-gradient(to bottom,transparent 0%,#000 26%);filter:drop-shadow(0 20px 26px rgba(0,0,0,.55))}
+#pxPov{z-index:15}
+#pov{position:absolute;height:min(80cqh,125cqw);aspect-ratio:2/3;bottom:-12cqh;left:60%;translate:-55% 0;transform:translateY(110%);transform-origin:50% 100%}
+#pov img{filter:drop-shadow(0 -10px 30px rgba(0,0,0,.5))}
+#palmGlow{position:absolute;width:44%;aspect-ratio:1;left:47%;top:50.5%;translate:-50% -50%;border-radius:50%;opacity:0;mix-blend-mode:screen;pointer-events:none;
+  background:radial-gradient(circle,rgba(255,236,180,.95),rgba(255,190,90,.35) 40%,transparent 70%)}
+
+#coin{position:absolute;left:0;top:0;z-index:16;width:40px;height:40px;opacity:0;pointer-events:none;will-change:transform;
+  filter:drop-shadow(0 0 10px rgba(255,205,110,.75)) drop-shadow(0 6px 10px rgba(0,0,0,.45))}
+#ring{position:absolute;left:0;top:0;z-index:16;width:40px;height:40px;opacity:0;pointer-events:none}
+#ring::after,#ring::before{content:"";position:absolute;inset:0;border-radius:50%;box-shadow:0 0 0 1px rgba(255,226,160,.9),0 0 22px rgba(255,200,100,.7);opacity:0}
+#ring.on::after{animation:ring 1.8s ease-out infinite}
+#ring.on::before{animation:ring 1.8s .9s ease-out infinite}
+@keyframes ring{0%{opacity:.9;scale:.9}100%{opacity:0;scale:2.2}}
+.shock{position:absolute;left:0;top:0;border-radius:50%;pointer-events:none;z-index:18;border:2px solid rgba(255,230,170,.95);box-shadow:0 0 18px rgba(255,200,100,.9),inset 0 0 14px rgba(255,210,120,.6)}
+.streak{position:absolute;left:0;top:0;height:3px;pointer-events:none;z-index:18;border-radius:50%;mix-blend-mode:screen;
+  background:linear-gradient(90deg,transparent,rgba(255,220,150,.9) 30%,#fffbea 50%,rgba(255,220,150,.9) 70%,transparent);box-shadow:0 0 14px rgba(255,200,110,.9)}
+#dust{position:absolute;inset:0;z-index:20;pointer-events:none}
+#blink{position:absolute;inset:0;z-index:35;background:#000;opacity:0;pointer-events:none}
+
+/* ================= 入座 ================= */
+#scSeat{z-index:2}
+#seatBox{will-change:transform,filter}
+.lyr{position:absolute;inset:0;will-change:transform;pointer-events:none}
+#seatBg{position:absolute;inset:-5%;background:var(--img-seat) center/cover no-repeat;filter:blur(1.5px) brightness(.92);transition:filter 1.2s}
+#seatBg.focusFar{filter:blur(4px) brightness(.8)}
+.bokeh{position:absolute;border-radius:50%;mix-blend-mode:screen;pointer-events:none;
+  background:radial-gradient(circle,rgba(255,226,160,.55),rgba(255,190,90,.18) 55%,transparent 70%);animation:bok 9s ease-in-out infinite alternate}
+@keyframes bok{from{transform:translate(0,0) scale(1);opacity:.5}to{transform:translate(1.5%,-3%) scale(1.15);opacity:1}}
+#cat{position:absolute;height:98%;aspect-ratio:2/3;left:49.6%;top:4%;transform-origin:50% 92%;cursor:pointer;transition:filter 1.2s;pointer-events:auto}
+#cat.soft{filter:blur(1.6px) brightness(.85)}
+#catInner{position:absolute;inset:0;transform-origin:50% 92%;animation:catBreath 4.6s ease-in-out infinite}
+@keyframes catBreath{0%,100%{transform:scale(1,1)}50%{transform:scale(1.004,1.009) translateY(-.15%)}}
+#catImg{position:absolute;inset:0;width:100%;height:100%;filter:drop-shadow(-18px 24px 30px rgba(0,0,0,.5))}
+#catRim{position:absolute;inset:0;pointer-events:none;mix-blend-mode:screen;opacity:.55;
+  background:radial-gradient(ellipse 40% 30% at 70% 16%,rgba(255,200,120,.35),transparent 70%),radial-gradient(ellipse 30% 20% at 50% 30%,rgba(255,230,180,.2),transparent 70%);animation:rim 6s ease-in-out infinite alternate}
+@keyframes rim{to{opacity:.9}}
+.flick{position:absolute;width:5.2%;aspect-ratio:2/3;left:56%;top:33%;border-radius:8%;background:var(--img-cback) center/cover;box-shadow:0 0 0 1px rgba(255,220,150,.6),0 4px 8px rgba(0,0,0,.4);opacity:0;pointer-events:none;transform-style:preserve-3d}
+#tableImg{position:absolute;width:120%;left:-56.4%;top:25%;aspect-ratio:3/2;filter:drop-shadow(0 -8px 30px rgba(0,0,0,.45)) brightness(.98);transition:filter 1.2s}
+#tableImg.dim{filter:drop-shadow(0 -8px 30px rgba(0,0,0,.45)) brightness(.86) blur(1px)}
+#nearBokeh .bokeh{filter:blur(4px)}
+
+#nameTag{position:absolute;left:88%;top:21%;display:flex;gap:.5em;align-items:flex-start;opacity:0;pointer-events:none;font-size:calc(var(--bh) * .012)}
+#nameTag.on{animation:nameIn 1.6s cubic-bezier(.2,.8,.2,1) forwards}
+@keyframes nameIn{from{opacity:0;transform:translateY(-14px);filter:blur(10px)}to{opacity:1;transform:none;filter:none}}
+#nameTag .nm{writing-mode:vertical-rl;font:400 calc(var(--bh) * .056)/1 "Ma Shan Zheng","KaiTi",serif;letter-spacing:.12em;
+  background:linear-gradient(180deg,#fff6dc,#f0c873 45%,#b07a2c 70%,#ffe7b0);-webkit-background-clip:text;background-clip:text;color:transparent;-webkit-text-fill-color:transparent;
+  filter:drop-shadow(0 2px 2px rgba(40,10,0,.9)) drop-shadow(0 0 14px rgba(255,180,80,.5))}
+#nameTag .side{display:flex;flex-direction:column;align-items:center;gap:.8em;padding-top:.6em}
+#nameTag .rl{width:1px;height:calc(var(--bh) * .09);background:linear-gradient(#f3d38a,transparent)}
+#nameTag .tt{writing-mode:vertical-rl;font-size:calc(var(--bh) * .016);letter-spacing:.6em;color:#e9cf98;text-shadow:0 1px 3px #000}
+#nameTag .seal{width:calc(var(--bh) * .036);height:calc(var(--bh) * .036);display:grid;place-items:center;font:400 calc(var(--bh) * .024)/1 "Ma Shan Zheng","KaiTi",serif;color:#ffe9d0;
+  background:radial-gradient(circle at 40% 35%,#d4322a,#8e0f0c);border-radius:3px;box-shadow:0 0 0 1px rgba(255,200,170,.35),0 2px 6px rgba(0,0,0,.6);transform:rotate(-6deg)}
+
+/* 气泡（散落排布，有远近） */
+.talk{position:absolute;inset:0;pointer-events:none}
+.talk svg{position:absolute;inset:0;width:100%;height:100%;overflow:visible}
+.lead{fill:none;stroke:url(#leadGrad);stroke-width:1.2;vector-effect:non-scaling-stroke;stroke-dasharray:1;stroke-dashoffset:1;animation:lead .9s cubic-bezier(.3,.7,.2,1) forwards;transition:opacity .8s}
+.leadDot{fill:#ffe4a6;filter:drop-shadow(0 0 4px #ffb84d);transition:opacity .8s}
+.lead.old,.leadDot.old{opacity:.18}
+@keyframes lead{to{stroke-dashoffset:0}}
+.bub{position:absolute;font:400 calc(var(--bh) * var(--fs) / 100)/1.35 "Ma Shan Zheng","STXingkai","KaiTi",serif;color:#fff2d6;letter-spacing:.06em;white-space:nowrap;
+  transform:rotate(var(--rot));transform-origin:0 0;transition:opacity 1s,filter 1s,transform 1s;
+  text-shadow:0 0 calc(var(--bh) * .012) rgba(255,170,70,.55),0 2px 3px rgba(20,4,0,.95)}
+.bub.v{writing-mode:vertical-rl;letter-spacing:.12em}
+.bub::before{content:"";position:absolute;inset:-34% -26%;z-index:-1;border-radius:46% 54% 42% 58%/55% 40% 60% 45%;filter:blur(calc(var(--bh) * .014));
+  background:radial-gradient(ellipse at 50% 50%,rgba(38,6,3,.72),rgba(60,10,4,.42) 52%,transparent 74%)}
+.bub .ln{display:block}
+.bub i{font-style:normal;display:inline-block;opacity:0;animation:inkIn .75s calc(var(--k) * 52ms) cubic-bezier(.2,.8,.2,1) forwards}
+@keyframes inkIn{from{opacity:0;filter:blur(7px);transform:translateY(.25em) scale(1.2);color:#ffd27a}to{opacity:1;filter:none;transform:none}}
+.bub.big{color:#fff6e0;text-shadow:0 0 calc(var(--bh) * .02) rgba(255,160,60,.7),0 3px 4px rgba(30,4,0,.95)}
+.bub.big::after{content:"";position:absolute;z-index:-1;left:-12%;right:-12%;top:-4%;bottom:-4%;border-radius:40%;
+  background:linear-gradient(180deg,transparent,rgba(170,20,14,.38) 30%,rgba(140,10,8,.5) 60%,transparent);filter:blur(calc(var(--bh) * .008));opacity:0;animation:fadeIn 1.2s .2s forwards}
+.bub.small{color:#f0d9a8}
+.bub.old{opacity:.4;filter:blur(1px);transform:rotate(var(--rot)) scale(.93)}
+.bub .stamp{display:inline-grid;place-items:center;width:1.05em;height:1.05em;margin:.35em .1em 0;font-size:.42em;color:#ffe9d2;background:radial-gradient(circle at 40% 35%,#d63a2e,#8b0e0b);border-radius:2px;
+  box-shadow:0 0 0 1px rgba(255,200,170,.35);opacity:0;transform:scale(2.2) rotate(-12deg);animation:stampIn .45s 1.1s cubic-bezier(.3,1.6,.5,1) forwards;writing-mode:horizontal-tb}
+@keyframes stampIn{to{opacity:1;transform:scale(1) rotate(-8deg)}}
+@keyframes fadeIn{to{opacity:1}}
+
+/* 「是」筹码 */
+#chipLyr{perspective:1500px;perspective-origin:30% 38%}
+#chip{position:absolute;left:24%;top:82%;width:calc(var(--bh) * .16);aspect-ratio:1;translate:-50% -50%;transform-style:preserve-3d;transform:rotateX(66deg);opacity:0;pointer-events:none;cursor:pointer}
+#chip.on{pointer-events:auto}
+#chip .disc{position:absolute;inset:0;border-radius:50%;transform-style:preserve-3d;transition:transform .45s cubic-bezier(.2,.8,.2,1);
+  background:
+    radial-gradient(circle,transparent 57%,#f6dc96 57.5%,#b17a2d 60%,transparent 60.5%),
+    radial-gradient(circle at 42% 36%,#e2483a,#a3150f 52%,#5e0705 100%);
+  box-shadow:0 0 0 calc(var(--bh) * .009) #7a0c08,0 0 0 calc(var(--bh) * .011) #f0cf84,0 18px 26px rgba(0,0,0,.55)}
+#chip .disc::before{content:"";position:absolute;inset:-4%;border-radius:50%;z-index:-1;
+  background:repeating-conic-gradient(#f7e2ad 0 10deg,#8f130e 10deg 30deg);-webkit-mask:radial-gradient(circle,transparent 66%,#000 67%);mask:radial-gradient(circle,transparent 66%,#000 67%)}
+#chip .disc b{position:absolute;inset:0;display:grid;place-items:center;font:400 calc(var(--bh) * .1)/1 "Ma Shan Zheng","KaiTi",serif;
+  background:linear-gradient(180deg,#fffaf0,#f6d58a 55%,#c98d35);-webkit-background-clip:text;background-clip:text;color:transparent;-webkit-text-fill-color:transparent;filter:drop-shadow(0 2px 1px rgba(60,0,0,.8))}
+#chip .halo{position:absolute;inset:-35%;border-radius:50%;background:radial-gradient(circle,rgba(255,215,130,.45),transparent 62%);animation:halo 2s ease-in-out infinite;transform:translateZ(-1px)}
+@keyframes halo{50%{opacity:.35;transform:translateZ(-1px) scale(1.15)}}
+#chip:hover .disc,#chip.hover .disc{transform:translateZ(18px) rotateZ(12deg)}
+#chipNote{position:absolute;left:15%;top:56%;writing-mode:vertical-rl;font:400 calc(var(--bh) * .026)/1 "Ma Shan Zheng","KaiTi",serif;letter-spacing:.5em;color:#f3dca8;opacity:0;transform:rotate(-4deg);
+  text-shadow:0 0 10px rgba(255,170,70,.6),0 2px 3px #000;pointer-events:none}
+.inkRing{position:absolute;border-radius:50%;pointer-events:none;border:3px solid rgba(214,50,40,.85);box-shadow:0 0 20px rgba(214,50,40,.6)}
+
+/* ================= 俯视桌面 ================= */
+#scTop{z-index:3;perspective:1100px;perspective-origin:50% 38%}
+#topTilt{position:absolute;inset:0;transform-style:preserve-3d;will-change:transform}
+#topPlane{transform-style:preserve-3d;transform-origin:50% 100%}
+#topImg{position:absolute;inset:0;width:100%;height:100%;display:block}
+#topLight{position:absolute;inset:0;pointer-events:none;mix-blend-mode:screen;
+  background:radial-gradient(ellipse 45% 40% at 50% 42%,rgba(255,220,150,.22),transparent 70%);animation:topLight 7s ease-in-out infinite alternate}
+@keyframes topLight{to{transform:translate(4%,2%) scale(1.1)}}
+#topVig{position:absolute;inset:0;pointer-events:none;background:radial-gradient(ellipse 70% 70% at 50% 46%,transparent 50%,rgba(0,0,0,.6))}
+.item{position:absolute;transform-style:preserve-3d;width:0;height:0}
+.lift{position:absolute;left:0;top:0;transform-style:preserve-3d;transition:transform .7s cubic-bezier(.2,.8,.2,1)}
+.body{position:absolute;transform-style:preserve-3d;cursor:pointer}
+.item.hover .lift{transform:translateZ(calc(var(--pw) * .02))}
+.shadow{position:absolute;pointer-events:none;background:rgba(0,0,0,.55);filter:blur(calc(var(--pw) * .006));transition:opacity .6s}
+.card{width:calc(var(--pw) * .088);aspect-ratio:2/3;left:calc(var(--pw) * -.044);top:calc(var(--pw) * -.066)}
+.card .face{position:absolute;inset:0;border-radius:6%;backface-visibility:hidden;-webkit-backface-visibility:hidden;background-size:cover;background-position:center;
+  box-shadow:0 0 0 1px rgba(255,226,160,.7),inset 0 0 0 2px rgba(80,10,4,.25)}
+.card .cb{background-image:var(--img-cback)}
+.card .cf{background-image:var(--img-cfront);transform:rotateY(180deg)}
+.card .gl{position:absolute;inset:0;border-radius:6%;pointer-events:none;backface-visibility:hidden;background:linear-gradient(115deg,transparent 35%,rgba(255,250,230,.55) 48%,transparent 60%);background-size:250% 100%;animation:glint 3.6s ease-in-out infinite}
+@keyframes glint{0%,60%{background-position:130% 0}100%{background-position:-130% 0}}
+.gunWrap{width:calc(var(--pw) * .25);aspect-ratio:1024/683;left:calc(var(--pw) * -.125);top:calc(var(--pw) * -.0834)}
+.gunWrap img{width:100%;height:100%;display:block;pointer-events:none;filter:drop-shadow(0 0 1px rgba(255,220,150,.6))}
+.gunShadow{width:calc(var(--pw) * .25);aspect-ratio:1024/683;left:calc(var(--pw) * -.125);top:calc(var(--pw) * -.0834);background:none!important;filter:brightness(0) blur(5px);opacity:.55}
+.gunShadow img{width:100%;height:100%;display:block}
+.diceSet{width:0;height:0}
+.die{position:absolute;width:var(--ds);height:var(--ds);left:calc(var(--ds) * -.5);top:calc(var(--ds) * -.5);transform-style:preserve-3d}
+.die .f{position:absolute;inset:0;border-radius:16%;background:var(--img-die) center/cover;display:grid;grid-template:repeat(3,1fr)/repeat(3,1fr);padding:16%;
+  box-shadow:inset 0 0 calc(var(--ds) * .12) rgba(140,100,40,.35),0 0 0 1px rgba(200,160,80,.5);backface-visibility:hidden;-webkit-backface-visibility:hidden}
+.die .f1{transform:translateZ(calc(var(--ds) / 2))}
+.die .f6{transform:rotateY(180deg) translateZ(calc(var(--ds) / 2))}
+.die .f3{transform:rotateY(90deg) translateZ(calc(var(--ds) / 2))}
+.die .f4{transform:rotateY(-90deg) translateZ(calc(var(--ds) / 2))}
+.die .f2{transform:rotateX(90deg) translateZ(calc(var(--ds) / 2))}
+.die .f5{transform:rotateX(-90deg) translateZ(calc(var(--ds) / 2))}
+.pip{width:70%;height:70%;place-self:center;border-radius:50%;
+  background:radial-gradient(circle at 36% 30%,#7a6656,#20150e 55%,#000 92%);box-shadow:inset 0 1px 1px rgba(0,0,0,.6),0 1px 0 rgba(255,255,255,.5)}
+.f1 .pip,.f4 .pip{background:radial-gradient(circle at 36% 30%,#ff9a86,#c0181e 48%,#5b0306 92%)}
+.f1 .pip{width:118%;height:118%}
+.dieShadow{width:var(--ds);height:var(--ds);left:calc(var(--ds) * -.5);top:calc(var(--ds) * -.5);border-radius:18%}
+.label{position:absolute;pointer-events:none;opacity:0;transition:opacity .8s,transform .8s;display:flex;gap:.45em;align-items:flex-start}
+.label.on{opacity:.62}
+.item.hover ~ .label.on,.label.hi{opacity:1}
+.label b{writing-mode:vertical-rl;font:400 calc(var(--pw) * .03)/1 "Ma Shan Zheng","KaiTi",serif;color:#fff0cc;text-shadow:0 0 12px rgba(255,180,80,.8),0 2px 3px #000}
+.label small{writing-mode:vertical-rl;font-size:calc(var(--pw) * .0105);letter-spacing:.5em;color:#e6c98f;text-shadow:0 1px 3px #000;padding-top:.6em}
+.label i{width:1px;align-self:stretch;background:linear-gradient(#f0cd85,transparent);margin-top:.4em}
+.circleGlow{position:absolute;border-radius:50%;pointer-events:none;opacity:0;transition:opacity .5s;
+  box-shadow:0 0 0 1.5px rgba(255,226,160,.9),0 0 30px rgba(255,200,100,.65),inset 0 0 30px rgba(255,200,100,.35)}
+.circleGlow.on{opacity:1}
+.pop{position:absolute;pointer-events:none;font:400 calc(var(--pw) * .05)/1 "Ma Shan Zheng","KaiTi",serif;color:#fff3d0;text-shadow:0 0 18px rgba(255,170,60,.9),0 3px 4px #000;white-space:nowrap}
+#topTalk{position:absolute;pointer-events:none}
+
+/* ================= 界面 ================= */
+#ui{position:absolute;inset:0;z-index:55;pointer-events:none}
+#caption{position:absolute;left:50%;bottom:8.5cqh;transform:translateX(-50%);white-space:nowrap;font-size:clamp(13px,1.55cqw,22px);letter-spacing:.32em;
+  color:#f7e6bd;text-shadow:0 0 18px rgba(255,190,90,.55),0 2px 6px rgba(0,0,0,.9);opacity:0;transition:opacity .7s,filter .7s;filter:blur(6px)}
+#caption.on{opacity:1;filter:blur(0)}
+#hint{position:absolute;left:50%;bottom:4cqh;transform:translateX(-50%);display:flex;white-space:nowrap;align-items:center;gap:14px;font-size:clamp(11px,1.05cqw,15px);letter-spacing:.5em;color:#e9c97f;opacity:0;transition:opacity .6s;text-shadow:0 1px 4px #000}
+#hint.on{opacity:1;animation:breath 2.2s ease-in-out infinite}
+#hint::before,#hint::after{content:"";width:46px;height:1px;background:linear-gradient(90deg,transparent,#e2be72)}
+#hint::after{transform:scaleX(-1)}
+@keyframes breath{50%{opacity:.45}}
+#frame{position:absolute;inset:clamp(10px,1.4cqw,22px);pointer-events:none;opacity:0;transition:opacity 2s}
+#frame.on{opacity:1}
+#frame i{position:absolute;width:42px;height:42px;border:1px solid rgba(235,198,120,.6)}
+#frame i:nth-child(1){left:0;top:0;border-right:0;border-bottom:0}
+#frame i:nth-child(2){right:0;top:0;border-left:0;border-bottom:0}
+#frame i:nth-child(3){left:0;bottom:0;border-right:0;border-top:0}
+#frame i:nth-child(4){right:0;bottom:0;border-left:0;border-top:0}
+#tools{position:absolute;right:clamp(14px,2cqw,30px);top:clamp(12px,2cqw,26px);display:flex;gap:8px;pointer-events:auto}
+.tbtn{font:inherit;font-size:12px;letter-spacing:.3em;padding:8px 10px 8px 13px;color:#e6cb92;background:rgba(10,4,0,.4);border:1px solid rgba(230,190,110,.35);cursor:pointer;backdrop-filter:blur(4px);-webkit-backdrop-filter:blur(4px)}
+#changeRuleBtn{min-height:44px;letter-spacing:.16em;background:linear-gradient(135deg,rgba(94,54,12,.86),rgba(17,10,4,.9));border-color:#c89b4d;box-shadow:inset 0 0 16px #e9ba5420,0 3px 18px #0006;color:#ffe6ae}
+#changeRuleBtn:focus-visible{outline:2px solid #ffe4a4;outline-offset:3px}
+.tbtn:hover{border-color:rgba(255,215,140,.8);color:#fff1cc}
+.tbtn.hl{border-color:rgba(255,215,140,.85);color:#fff1cc;box-shadow:0 0 14px rgba(255,190,90,.45)}
+.btn{position:relative;font:inherit;cursor:pointer;color:#fff3d2;letter-spacing:.7em;padding:14px 26px 14px calc(26px + .7em);font-size:clamp(14px,1.2cqw,17px);
+  background:linear-gradient(180deg,rgba(120,30,12,.55),rgba(50,10,4,.65));border:1px solid rgba(240,200,120,.85);
+  box-shadow:inset 0 0 0 3px rgba(20,5,0,.5),inset 0 0 0 4px rgba(240,200,120,.35),0 8px 24px rgba(0,0,0,.45);transition:transform .3s,box-shadow .3s}
+.btn:hover{transform:translateY(-2px);box-shadow:inset 0 0 0 3px rgba(20,5,0,.5),inset 0 0 0 4px rgba(255,220,150,.6),0 0 28px rgba(255,190,90,.55)}
+
+#loader{position:absolute;inset:0;z-index:50;background:radial-gradient(ellipse at 50% 45%,#1d0a04,#000 70%);display:flex;flex-direction:column;align-items:center;justify-content:center;gap:26px;transition:opacity 1s}
+#loader.hide{opacity:0;pointer-events:none}
+.ld-coin{width:64px;height:64px;border-radius:50%;background:radial-gradient(circle at 35% 30%,#fff3c4,#e2b25a 40%,#8a5a1c 80%);box-shadow:0 0 30px rgba(255,190,90,.45);animation:flip 1.6s linear infinite}
+@keyframes flip{to{transform:rotateY(360deg)}}
+.ld-text{font-size:13px;letter-spacing:.5em;color:#cfae6c}
+#startBtn{display:none}
+#loader.ready #startBtn{display:block;animation:fadeUp .8s forwards}
+@keyframes fadeUp{from{opacity:0;transform:translateY(10px)}to{opacity:1;transform:none}}
+#rotMask{position:absolute;inset:0;z-index:60;background:#000;opacity:0;pointer-events:none;transition:opacity .35s}
+</style>
+<link rel="stylesheet" href="catalog.css">
+<link rel="stylesheet" href="loading.css">
+<link rel="stylesheet" href="district.css">
+<link rel="stylesheet" href="media.css">
+</head>
+<body>
+<div id="app">
+  <!-- ========== 开场 + 大厅 ========== -->
+  <div class="scene" id="scIntro">
+    <div class="px" id="pxBg"><div id="cam">
+      <div class="box" id="world">
+        <img id="bgImg" alt="">
+        <svg id="hot" viewBox="0 0 1568 882" preserveAspectRatio="none">
+          <defs><radialGradient id="hotFill"><stop offset="0" stop-color="rgba(255,226,150,.38)"/><stop offset="1" stop-color="rgba(255,200,100,.06)"/></radialGradient></defs>
+          <path class="tbl" data-s="2.7"  d="M282,546 Q300,522 440,521 Q585,522 598,546 L592,610 L583,668 Q440,688 296,668 L289,610 Z"/>
+          <path class="tbl" data-s="2.7"  d="M1152,546 Q1170,522 1325,521 Q1488,522 1502,548 L1497,610 L1470,690 Q1325,702 1198,690 L1165,610 Z"/>
+          <path class="tbl" data-s="4.2"  d="M984,512 Q1000,500 1045,499 Q1096,501 1102,514 L1097,562 Q1040,570 990,562 Z"/>
+          <path class="tbl" data-s="4.4"  d="M128,512 Q148,500 180,501 Q216,504 217,515 L211,560 Q170,567 136,560 Z"/>
+          <path class="tbl" data-s="4.8"  d="M592,505 Q645,492 738,494 L742,527 Q660,537 596,531 Z"/>
+          <path class="tbl" data-s="4.8"  d="M893,505 Q940,494 987,499 L987,541 Q940,547 898,539 Z"/>
+          <path class="tbl" data-s="1.55" data-tx="560" data-ty="770" d="M180,676 Q600,648 960,716 Q1110,756 1180,882 L0,882 L0,700 Z"/>
+        </svg>
+        <div id="tblTag"><b>入座</b><i></i></div>
+      </div>
+    </div></div>
+    <div class="px" id="pxFg"><div id="fgCam"><div class="box" id="fg"><img id="fgImg" alt=""></div></div></div>
+    <div id="shafts"></div>
+    <div id="vignette"></div>
+    <div id="dark"></div>
+    <div class="front" id="frontL"></div>
+    <div class="front" id="frontR"></div>
+    <div class="px" id="pxCurt">
+      <div id="seamGlow"></div>
+      <div class="curtain l" id="curtL"><div class="drop"><div class="sway"><div class="cimg"></div></div></div></div>
+      <div class="curtain r" id="curtR"><div class="drop"><div class="sway"><div class="cimg"></div></div></div></div>
+    </div>
+    <div class="px" id="pxRays"><div id="rays"></div></div>
+    <div class="px" id="pxBeauty"><div id="beauty"><img id="beautyImg" alt=""></div></div>
+    <div class="px" id="pxPov"><div id="pov"><img id="povImg" alt=""><div id="palmGlow"></div></div></div>
+  </div>
+
+  <!-- ========== 入座 ========== -->
+  <div class="scene off" id="scSeat">
+    <div class="box" id="seatBox">
+      <div class="lyr" data-d="10"><div id="seatBg"></div>
+        <div class="bokeh" style="left:8%;top:12%;width:9%;aspect-ratio:1;animation-delay:-2s"></div>
+        <div class="bokeh" style="left:30%;top:4%;width:6%;aspect-ratio:1;animation-delay:-5s"></div>
+        <div class="bokeh" style="left:44%;top:20%;width:4%;aspect-ratio:1;animation-delay:-1s"></div>
+        <div class="bokeh" style="left:92%;top:30%;width:7%;aspect-ratio:1;animation-delay:-7s"></div>
+      </div>
+      <div class="lyr" data-d="22" id="catLyr">
+        <div id="cat"><div id="catInner"><img id="catImg" alt="头头猫"><div id="catRim"></div>
+          <div class="flick" id="flick1"></div><div class="flick" id="flick2"></div></div></div>
+        <div id="nameTag"><div class="nm">头头猫</div><div class="side"><div class="rl"></div><div class="tt">荷 官</div><div class="seal">猫</div></div></div>
+      </div>
+      <div class="lyr" data-d="42"><img id="tableImg" alt=""></div>
+      <div class="lyr talk" data-d="30" id="seatTalk"><svg viewBox="0 0 1000 1000" preserveAspectRatio="none">
+        <defs><linearGradient id="leadGrad" x1="0" y1="0" x2="1" y2="1"><stop offset="0" stop-color="rgba(255,230,170,.9)"/><stop offset="1" stop-color="rgba(255,190,90,.25)"/></linearGradient></defs></svg></div>
+      <div class="lyr" data-d="42" id="chipLyr">
+        <div id="chipNote">只 此 一 选</div>
+        <div id="chip"><div class="halo"></div><div class="disc"><b>是</b></div></div>
+      </div>
+      <div class="lyr" data-d="70" id="nearBokeh" style="pointer-events:none">
+        <div class="bokeh" style="left:-4%;top:58%;width:16%;aspect-ratio:1;opacity:.5"></div>
+        <div class="bokeh" style="left:86%;top:70%;width:20%;aspect-ratio:1;animation-delay:-4s;opacity:.4"></div>
+      </div>
+    </div>
+  </div>
+
+  <!-- ========== 俯视桌面 ========== -->
+  <div class="scene off" id="scTop">
+    <div id="topTilt">
+      <div class="box" id="topPlane">
+        <img id="topImg" alt="">
+        <div id="topLight"></div>
+        <div class="circleGlow" id="cg0"></div><div class="circleGlow" id="cg1"></div><div class="circleGlow" id="cg2"></div>
+        <!-- 牌 -->
+        <div class="shadow" id="shCard" style="border-radius:6%"></div>
+        <div class="item" id="itCard" data-k="card"><div class="lift"><div class="body card" id="bdCard"><div class="face cb"></div><div class="face cf"></div><div class="gl"></div></div></div></div>
+        <div class="label" id="lbCard"><b>牌</b><i></i><small>红心皇后</small></div>
+        <!-- 枪 -->
+        <div class="shadow gunShadow" id="shGun"><img id="gunShImg" alt=""></div>
+        <div class="item" id="itGun" data-k="gun"><div class="lift"><div class="body gunWrap" id="bdGun"><img id="gunImg" alt=""></div></div></div>
+        <div class="label" id="lbGun"><b>枪</b><i></i><small>六膛一实</small></div>
+        <!-- 骰 -->
+        <div class="shadow dieShadow" id="shDie0"></div><div class="shadow dieShadow" id="shDie1"></div>
+        <div class="item" id="itDice" data-k="dice"><div class="lift">
+          <div class="body diceSet" id="bdDice"><div class="die" id="die0"></div><div class="die" id="die1"></div></div></div></div>
+        <div class="label" id="lbDice"><b>骰</b><i></i><small>天命两颗</small></div>
+        <div id="topVig"></div>
+      </div>
+    </div>
+    <div class="box talk" id="topTalk"></div>
+  </div>
+
+  <!-- ========== 对局（牌 / 枪 / 骰）========== -->
+  <div class="scene off" id="scDuel">
+    <div id="duelCam">
+      <div class="box" id="duelBox">
+        <div class="lyr" data-d="8"><div id="dBg"></div>
+          <div class="bokeh" style="left:6%;top:10%;width:8%;aspect-ratio:1;animation-delay:-2s"></div>
+          <div class="bokeh" style="left:84%;top:16%;width:6%;aspect-ratio:1;animation-delay:-6s"></div>
+          <div class="bokeh" style="left:26%;top:4%;width:5%;aspect-ratio:1;animation-delay:-4s"></div>
+          <div id="dLamp"></div>
+        </div>
+        <div class="lyr" data-d="20" id="dCatL">
+          <div id="dCat"><div id="dCatSway"><div id="dCatInner">
+            <img class="pose on" data-p="sit"  data-src="ttSit"  alt="">
+            <img class="pose" data-p="gun"  data-src="ttGun"  alt="">
+            <img class="pose" data-p="aim"  data-src="ttAim"  alt="">
+            <img class="pose" data-p="dice" data-src="ttDice" alt="">
+            <img class="pose" data-p="win"  data-src="ttWin"  alt="">
+            <img class="pose" data-p="pout" data-src="ttPout" alt="">
+            <img id="dEyes" data-src="ttEyes" alt="">
+            <img id="dMouth" data-src="ttMouth" alt="">
+            <div id="dRim"></div>
+            <div id="dGunSpin"><div class="gs"><img class="g g2" data-src="gun" alt=""><img class="g g1" data-src="gun" alt=""><img class="g g0" data-src="gun" alt=""></div></div>
+            <div id="dBump"></div>
+          </div></div></div>
+        </div>
+        <div class="lyr" data-d="28"><img id="dTable" data-src="tnear" alt=""><div id="dTableShade"></div></div>
+        <div class="lyr talk" data-d="34" id="dTalk"><svg viewBox="0 0 1000 1000" preserveAspectRatio="none"></svg></div>
+        <div class="lyr" data-d="60" id="dNear">
+          <div class="bokeh" style="left:-5%;top:64%;width:15%;aspect-ratio:1;opacity:.4;filter:blur(5px)"></div>
+          <div class="bokeh" style="left:88%;top:72%;width:18%;aspect-ratio:1;opacity:.35;filter:blur(6px);animation-delay:-3s"></div>
+        </div>
+      </div>
+      <div id="dFelt"></div>
+    </div>
+    <div id="dVig"></div>
+    <div id="dRed"></div>
+    <div id="dUi"></div>
+  </div>
+
+  <!-- ========== 页面：创造角色 / 世界观 ========== -->
+  <div class="scene off page" id="scCreate"></div>
+  <div class="scene off page" id="scWorld"></div>
+  <div class="scene off page" id="scCatalog"></div>
+
+  <img id="coin" alt="">
+  <div id="ring"></div>
+  <canvas id="dust"></canvas>
+  <div id="flash"></div>
+  <div id="blink"></div>
+
+  <div id="ui">
+    <div id="frame"><i></i><i></i><i></i><i></i></div>
+    <div id="tools">
+      <button type="button" class="tbtn off" id="changeRuleBtn" title="返回选择桌，当前对局将重置" aria-label="改变赌法，返回牌枪骰选择桌">改变赌法</button>
+      <button class="tbtn off" id="rotBtn">横 屏</button>
+      <button class="tbtn" id="muteBtn">声 · 开</button>
+      <button class="tbtn off" id="skipBtn">跳 过</button>
+      <button class="tbtn off" id="againBtn">重 来</button>
+    </div>
+    <div id="caption"></div>
+    <div id="hint"></div>
+  </div>
+
+  <section id="welcomeScreen" aria-label="视频欢迎页">
+    <video id="welcomeVideo" autoplay muted loop playsinline webkit-playsinline preload="metadata" ></video><div class="welcome-shade"></div><div class="welcome-line"></div>
+    <div class="welcome-mark">新濠蜃楼城<span>THE GOLDEN DOME</span></div>
+    <button id="videoSound" class="pgBtn">视频声音 · 开启</button>
+    <button id="welcomeEnter"><small>推 开 今 夜 的 门</small><span>欢迎来到全世界最大的赌场</span><b>ENTER THE MIRAGE　↗</b></button>
+    <div class="welcome-side">金穹不夜 · 百美夜宴</div><p class="welcome-note" id="videoNote">高清实景 · 轻触开启视频声音</p>
+  </section>
+  <div id="loader" class="prewelcome">
+    <div class="load-room"></div><div class="load-halo"></div>
+    <div class="load-composition"><span class="load-seal">新濠蜃楼城</span><div class="load-heading">灯火，将启。</div><p class="load-sub">请稍候 · 正在为你备妥今夜的每一帧</p>
+    <div class="load-progress"><i id="loadBar"></i></div><div class="load-meter"><span class="ld-text" id="ldText">正在准备素材</span><strong id="loadPercent">0<small>%</small></strong></div>
+    <p id="loadDetail">画卷 · 人物 · 光影 · 声场</p><button id="loadSkip" class="btn">先入场 · 后台继续加载</button><button id="loadRetry" class="btn" hidden>重新加载未完成素材</button><small class="load-foot">可等待全部就绪，也可直接入场</small></div>
+  </div>
+  <div id="rotMask"></div>
+</div>
+
+<script>
+/* ================= 图片：全部为公网外链，每张三重回退 ================= */
+const CAT = id => 'https://files.catbox.moe/' + id + '.webp';
+const L3 = (main, cb) => ['https://assets.kotodamai.com/i/' + main + '/image.webp', CAT(cb), 'https://wsrv.nl/?url=files.catbox.moe/' + cb + '.webp&output=webp'];
+const SRC = {
+  bg:     L3('PxAjtUAh8PncDUR0-KIF82hZCIp015JB', 'ednjw8'),
+  fg:     L3('ruYqtg08sp1w9JAVaVlBxo2ZKjsz4PZu', 'x94xos'),
+  curtain:L3('wFJnkFhw8FVfk1SjA8mURuVB76yyGvtv', 'zcvj2h'),
+  hand:   L3('BVsR8AlVE8I_hSOHqVxvfntyyIYVkRwU', 'v9govn'),
+  coin:   L3('ejKOJApLUsG3j4sACLBo3npoM2_1UBKP', '0dhjc7'),
+  pov:    L3('CNKHIysNceaH2sK6jfxe2k7ZTnw56LVg', '647w34'),
+  seat:   L3('5Ms15njGHIPPWKOHfzDQy5i794pqB4N_', 'n4gshj'),
+  cat:    L3('dbZiUT_5g_yt_ageOUoCbJRaJN900KEN', 'a9jgwl'),
+  tnear:  L3('B9_2GhSXAiEyEkEqnU7jSptTXFfhvpMC', 'qyq9fs'),
+  ttop:   L3('WbE4lAO75srcYatOJg--IHs17dD3FO9e', '961y6v'),
+  cback:  L3('6IHD_BFlWvAUiuqKfB1FJi6Kqq9c8-vc', 'zsntr9'),
+  cfront: L3('atr3pdpXW6HB19ua7rJjDR_0uZJOt81w', 'tdmfca'),
+  gun:    L3('6KiM8p7B83MGOFcmExZqPbxsFTjjFy5s', 'uvxftf'),
+  die:    L3('Cty_rU7WKWxFX50Xu7YC6BjMzOfvtyCy', 'ifeb39'),
+};
+// 第三批素材：言灵图床 → freeimage(iili.io) → wsrv 代理
+const K3 = (main, fi) => ['https://assets.kotodamai.com/i/' + main + '/image.webp', 'https://iili.io/' + fi + '.webp', 'https://wsrv.nl/?url=iili.io/' + fi + '.webp&output=webp'];
+const KV2 = (main, fi) => ['https://assets.kotodamai.com/i/' + main + '/image.webp', 'https://wsrv.nl/?url=assets.kotodamai.com/i/' + main + '/image.webp&output=webp', 'https://iili.io/' + fi + '.webp'];
+Object.assign(SRC, {
+  ttSit:  K3('n9QWhRoNJVpkKv3EJaCRrXSKTFZ_DbAf', 'ntjEF0Q'),
+  ttGun:  K3('xPs1Oamm3oxRLC01w91dPZoN33Qsl-EB', 'ntjEHzu'),
+  // v2：重新抠绿（去掉发丝绿边）；备链：wsrv 代理主链 → 旧版 iili
+  ttAim:  KV2('QARmzGPhIqPSrO_ii_u20CycIQluZdf4', 'ntj1Z0l'),
+  ttPout: K3('_MMns-xFQJtv2MWk_vzq_QctP_UF6Sbd', 'ntjEdsj'),
+  ttDice: K3('4U45wStMh-4_MXFx3yivs5j2HVhwsuzB', 'ntj1m57'),
+  ttWin:  KV2('pSJtV8wN5ozMjRgaCzKesgwL4Ohu4gKt', 'ntjEB5P'),
+  ttEyes: K3('PpcvSCNhJwgz8kf0PD8H2ug9ByKFq4Db', 'ntj1pe9'),
+  ttMouth:K3('VzmvnKQv6Re5acDHgBcGyjRAoGLo2ZoZ', 'ntj0laI'),
+  cblank: K3('29uckTD3D6m0Axlwy3WLKrSGW_by6Pho', 'ntj04Mx'),
+  ck:     K3('uwjj1m2TYxfyaX20ZElKPYF0yD-C2HZH', 'ntj0iFV'),
+  ca:     K3('Kup5Xf87Xu9Zi64OT2_4DmIhsEZuy9HI', 'ntj0rnj'),
+  c2:     K3('C9K6XeDB2rTtT6HpDgeHTE3zHVXJ-VwO', 'ntj0Swu'),
+  cup:    K3('RTRi0abnb_uaCpL-uGl4E7lR8yg_yFFX', 'ntj12SI'),
+  press:  K3('gmkYsFAIhmyQ4P3lELvYZzIojH-6IiqE', 'ntj1CoG'),
+  povgun: K3('EXOhtHbTZxWa3fXf2q021kUgfkEhqu2b', 'ntj1qts'),
+  cyl:    K3('7qxeCY1OpaoBUV_bSLxZXd9RntIiNjEm', 'ntj1dcN'),
+  bullet: K3('3zNzVCF8zuu5KiKdepDyjb4hF1UdQ1Kp', 'ntj0v99'),
+  gunroom:K3('SgDtp5DRXLrEbt2PRrWE5j6Q9oN-T0Ft', 'ntj1KAX'),
+  createbg:K3('r8IuyLuiQcEc9qzA8jI3zLxxVvfS6Q0-', 'ntj19PR'),
+  wcity:  K3('JL1auhlIRdrdkvuuiGtHWH9EAV6atooH', 'ntjExzg'),
+  wmap:   K3('4ku2OPRt6QZgLkHZXAa0tSgcssNeD_0J', 'ntjEY7I'),
+  weye:   K3('tmvDptkDTeyRrPRQIkt62yU-4nGWAJjB', 'ntjEILJ'),
+  wmath:  K3('HqjUuovEUXdXczgG-WNXnSp73GWFKOvX', 'ntjE1Xs'),
+  wlight: K3('WdcypGI7Yq1X_DU_d4v1ISe48RQt6j7G', 'ntjERgp'),
+  race0:  K3('45holdFGmC-S-f1DZ-TSbyGFXxH_6kK0', 'ntj1nVf'),
+  race1:  K3('j5v-u_rPVXz5CHpxe5DYTaQAE7L4k2L7', 'ntj1Il2'),
+  race2:  K3('yFJReQFq1YqUrucRZOQIF6UFMYxx96Bv', 'ntj1AH7'),
+  race3:  K3('2fVOGoqdYFXZJC2Ipt3mo_qhNJFieBDO', 'ntj17Du'),
+  race4:  K3('63W7n6eFvDbS4hiornGKYe4AwdNKT7_r', 'ntj1cVj'),
+  race5:  K3('_HD0_cdox41YwYnyw9ADG3ZoLG2UWDI4', 'ntj11KQ'),
+  race6:  K3('LQ01Nn6ExFBZnciFBoBpgt84tIxaIyRM', 'ntj1GUB'),
+  race7:  K3('nme3FfRATqXpSYh0Cq2J-PkgZpH8rjkr', 'ntj18UN'),
+  race8:  K3('HEgeqy8DcUP2HDfIS1KiKV__ZbW9e-C2', 'ntj14bn'),
+  race9:  K3('Pu8mVbUBpPa5yBDc9e772OgSpVrX2EUp', 'ntj1Pxs'),
+});
+const lowPower = window.MIRAGE_CDN.lowPower;
+const CRITICAL = ['bg', 'fg', 'curtain', 'hand', 'coin', 'pov'];
+const U = {}, ASSET_P = {};
+// 按需加载：asset(key) → Promise<可用外链>
+function asset(k){ if (!ASSET_P[k]) ASSET_P[k] = tryLoad(SRC[k]).then(u => (U[k] = u || SRC[k][0])); return ASSET_P[k]; }
+const need = keys => Promise.all(keys.map(asset));
+function tryLoad(urls, timeout = 9000){
+  return new Promise(res => {
+    let i = 0;
+    const next = () => {
+      if (i >= urls.length) return res(null);
+      const u = urls[i++], im = new Image(); let done = false;
+      const t = setTimeout(() => { if (!done){ done = true; im.src = ''; next(); } }, timeout);
+      im.onload  = () => { if (!done){ done = true; clearTimeout(t); res(u); } };
+      im.onerror = () => { if (!done){ done = true; clearTimeout(t); next(); } };
+      im.src = u;
+    };
+    next();
+  });
+}
+
+/* ================= 工具 ================= */
+const $ = s => document.querySelector(s);
+const app = $('#app'), root = document.documentElement;
+let CLOCK = 0, FREEZE = false, pausedAnims = [];
+const sleep = ms => new Promise(r => { const end = CLOCK + ms; const chk = () => CLOCK >= end ? r() : setTimeout(chk, 16); chk(); });
+window.freeze = on => { FREEZE = on;
+  if (on){ pausedAnims = document.getAnimations().filter(a => a.playState === 'running'); pausedAnims.forEach(a => a.pause()); }
+  else { pausedAnims.forEach(a => a.play()); pausedAnims = []; } };
+const lerp = (a, b, t) => a + (b - a) * t;
+const clamp01 = t => Math.max(0, Math.min(1, t));
+const ease = { inOut: t => t < .5 ? 4*t*t*t : 1 - Math.pow(-2*t + 2, 3) / 2, out: t => 1 - Math.pow(1 - t, 3), in: t => t*t*t, outQ: t => 1 - (1 - t)*(1 - t), sine: t => .5 - .5*Math.cos(Math.PI*t) };
+const anim = (e, kf, opt) => {
+  if (e.id !== 'blink') return e.animate(kf, Object.assign({ fill:'forwards' }, opt));
+  const before = getComputedStyle(e).opacity;
+  e.getAnimations().forEach(a => a.cancel());
+  e.style.opacity = before;
+  const a = e.animate(kf, Object.assign({}, opt, { fill:'forwards' }));
+  a.finished.then(() => {
+    if (e._maskAnimation !== a) return;
+    e.style.opacity = String(kf[kf.length - 1].opacity);
+    e._maskAnimation = null;
+    a.cancel();
+  }, () => { if (e._maskAnimation === a) e._maskAnimation = null; });
+  e._maskAnimation = a;
+  return a;
+};
+const el = {};
+['scIntro','scSeat','scTop','pxBg','cam','world','bgImg','hot','tblTag','pxFg','fgCam','fg','fgImg','shafts','dark','frontL','frontR','curtL','curtR','seamGlow','rays','flash','blink',
+ 'pxBeauty','beauty','beautyImg','pov','povImg','palmGlow','coin','ring','caption','hint','frame','loader','ldText','seatBox','seatBg','cat','catInner','catImg','tableImg','nameTag',
+ 'seatTalk','chip','chipNote','topTilt','topPlane','topImg','topTalk','rotBtn','skipBtn','againBtn','muteBtn','rotMask'].forEach(id => el[id] = document.getElementById(id));
+
+/* ================= 布局 / 横屏 ================= */
+let W = innerWidth, H = innerHeight, SW = innerWidth, SH = innerHeight, ROT = false, forceLand = false;
+const isPortrait = () => innerHeight > innerWidth;
+function cover(box, aspect, over = 1, ay = .5){
+  let bw = W*over, bh = bw/aspect; if (bh < H*over){ bh = H*over; bw = bh*aspect; }
+  Object.assign(box.style, { width:bw + 'px', height:bh + 'px', left:(W - bw)/2 + 'px', top:(H - bh)*ay + 'px' });
+  return { w:bw, h:bh, x:(W - bw)/2, y:(H - bh)*ay };
+}
+let WB, SB, TB;
+function layout(){
+  SW = innerWidth; SH = innerHeight;
+  ROT = forceLand && SH > SW;
+  W = ROT ? SH : SW; H = ROT ? SW : SH;
+  app.style.width = W + 'px'; app.style.height = H + 'px';
+  app.style.transform = ROT ? `translate(${SW}px,0) rotate(90deg)` : 'none';
+  el.rotBtn.classList.toggle('off', !(isPortrait() || ROT));
+  el.rotBtn.textContent = ROT ? '竖 屏' : '横 屏';
+  el.rotBtn.classList.toggle('hl', isPortrait() && !ROT);
+  WB = cover(el.world, 1672/941, 1.08);
+  cover(el.fg, 1672/941, 1.2, .35);
+  SB = cover(el.seatBox, 16/9, 1.0);
+  el.seatBox.style.setProperty('--bh', SB.h + 'px');
+  TB = cover(el.topPlane, 16/9, 1.0);
+  el.topPlane.style.setProperty('--pw', TB.w + 'px'); el.topPlane.style.setProperty('--ds', TB.w*.052 + 'px');
+  cover(el.topTalk, 16/9, 1.0); el.topTalk.style.setProperty('--bh', TB.h + 'px');
+  placeTopStatic();
+  resizeDust();
+  const pw = W*.516, imgH = Math.max(pw*1.5, H*1.22), imgW = imgH/1.5, top = H*1.005 - .845*imgH;
+  document.querySelectorAll('.cimg').forEach(c => { c.style.width = imgW + 'px'; c.style.height = imgH + 'px'; c.style.top = top + 'px'; });
+  if (SCENE === 'hall') setCam(hallZoom);
+  if (typeof LAYOUT_HOOKS !== 'undefined') for (const h of LAYOUT_HOOKS) h();
+}
+addEventListener('resize', layout);
+// 屏幕坐标 → 舞台本地坐标
+function toLocal(cx, cy){ return ROT ? { x:cy, y:SW - cx } : { x:cx, y:cy }; }
+function rectL(e){ const r = e.getBoundingClientRect(); return ROT ? { left:r.top, top:SW - r.right, width:r.height, height:r.width } : { left:r.left, top:r.top, width:r.width, height:r.height }; }
+
+/* ================= 声音（实时合成） ================= */
+const SFX_VOLUME = .12;
+let AC = null, master = null, muted = false, nbuf = null;
+function audioInit(){
+  if(AC){ if(AC.state === "suspended") AC.resume().catch(()=>{}); return; }
+  try{ AC = new (window.AudioContext || window.webkitAudioContext)(); master = AC.createGain(); master.gain.value = SFX_VOLUME; master.connect(AC.destination);
+    nbuf = AC.createBuffer(1, AC.sampleRate*3, AC.sampleRate); const d = nbuf.getChannelData(0); for (let i = 0; i < d.length; i++) d[i] = Math.random()*2 - 1;
+  }catch(e){ AC = null; }
+}
+function env(g, t, a, peak, d){ g.gain.setValueAtTime(.0001, t); g.gain.exponentialRampToValueAtTime(peak, t + a); g.gain.exponentialRampToValueAtTime(.0001, t + a + d); }
+function noise(t, dur, type, f0, f1, peak, a = .05, q = .8){
+  const n = AC.createBufferSource(); n.buffer = nbuf; const f = AC.createBiquadFilter(); f.type = type; f.Q.value = q;
+  f.frequency.setValueAtTime(f0, t); f.frequency.exponentialRampToValueAtTime(f1, t + dur);
+  const g = AC.createGain(); env(g, t, a, peak, dur); n.connect(f).connect(g).connect(master); n.start(t, Math.random()*Math.max(0, 2.8 - dur - a)); n.stop(t + dur + a + .1);
+}
+function tone(t, freq, peak, dur, type = 'sine', a = .004, f1){
+  const o = AC.createOscillator(); o.type = type; o.frequency.setValueAtTime(freq, t); if (f1) o.frequency.exponentialRampToValueAtTime(f1, t + dur);
+  const g = AC.createGain(); env(g, t, a, peak, dur); o.connect(g).connect(master); o.start(t); o.stop(t + a + dur + .05);
+}
+const S = fn => (...a) => { if (AC) fn(AC.currentTime, ...a); };
+const sfx = {
+  whoosh:S(t => noise(t, 1.1, 'bandpass', 260, 1400, .22, .35)),
+  thump:S(t => { tone(t, 95, .55, .7, 'sine', .015, 38); noise(t, .45, 'lowpass', 600, 200, .28, .01); }),
+  part:S(t => noise(t, 1.4, 'bandpass', 500, 2200, .1, .5)),
+  ting:S(t => { [2637, 3951, 5274, 6650].forEach((f, i) => tone(t, f, .11/(i + 1), 1.6 - i*.25)); noise(t, .06, 'highpass', 6000, 9000, .08, .002); }),
+  clink:S(t => { [1975, 2960, 4186, 5590].forEach((f, i) => tone(t, f, .14/(i + 1), 1.3 - i*.2)); noise(t, .05, 'highpass', 4000, 7000, .12, .002); }),
+  shimmer:S(t => { [1046.5, 1318.5, 1568, 2093, 2637, 3136, 4186].forEach((f, i) => tone(t + i*.085, f, .055, 2.6)); noise(t, 2.6, 'highpass', 2500, 9000, .05, 1.2); }),
+  pad:S(t => [130.8, 196, 261.6, 329.6, 392].forEach((f, i) => { const o = AC.createOscillator(); o.type = 'sawtooth'; o.frequency.value = f; o.detune.value = i % 2 ? 6 : -6;
+      const lp = AC.createBiquadFilter(); lp.type = 'lowpass'; lp.frequency.value = 900; const g = AC.createGain(); env(g, t, 1.6, .035, 6); o.connect(lp).connect(g).connect(master); o.start(t); o.stop(t + 8); })),
+  step:S((t, k = 1) => { tone(t, 70, .22*k, .16, 'sine', .006, 45); noise(t, .09, 'lowpass', 900, 300, .12*k, .004); }),
+  sit:S(t => { noise(t, .5, 'lowpass', 400, 120, .2, .02); tone(t + .02, 110, .2, .3, 'triangle', .01, 60); noise(t + .1, .6, 'bandpass', 900, 500, .05, .15, 3); }),
+  pop:S(t => { tone(t, 880, .05, .25, 'sine', .005, 1320); noise(t, .08, 'bandpass', 2000, 3000, .04, .005); }),
+  seal:S(t => { tone(t, 140, .45, .35, 'sine', .006, 60); noise(t, .25, 'lowpass', 1800, 300, .25, .003); [1568, 2349].forEach((f, i) => tone(t + .05, f, .05/(i + 1), .8)); }),
+  flutter:S((t, n = 10) => { for (let i = 0; i < n; i++) noise(t + i*.045, .035, 'bandpass', 2500 + Math.random()*1500, 1800, .07, .003, 2); }),
+  swish:S(t => noise(t, .35, 'bandpass', 900, 3200, .14, .05, 1.2)),
+  metal:S((t, k = 1) => { [523, 1310, 2290, 3720].forEach((f, i) => tone(t, f*(1 + Math.random()*.01), .1*k/(i + 1), .9 - i*.15, 'triangle', .002)); noise(t, .12, 'highpass', 2500, 5000, .14*k, .002); }),
+  ratchet:S((t, n = 14, dur = 2) => { for (let i = 0; i < n; i++){ const tt = t + dur*Math.pow(i/n, 1.7); noise(tt, .02, 'bandpass', 4200, 3800, .05, .001, 6); } }),
+  click:S(t => { noise(t, .03, 'highpass', 3000, 6000, .3, .001); tone(t, 1800, .12, .08, 'square', .001, 900); tone(t + .09, 2400, .06, .05, 'square', .001); }),
+  dice:S((t, k = 1) => { noise(t, .04, 'bandpass', 3200, 2600, .22*k, .001, 3); tone(t, 1900 + Math.random()*600, .05*k, .06, 'triangle', .001); }),
+};
+
+/* ================= 视差 ================= */
+let mx = 0, my = 0, tmx = 0, tmy = 0, lastMove = -1e9, parallaxOn = true;
+addEventListener('pointermove', e => { const p = toLocal(e.clientX, e.clientY); tmx = p.x/W*2 - 1; tmy = p.y/H*2 - 1; lastMove = performance.now(); });
+const PX = [[el.pxBg, 16], [el.pxFg, 46], [$('#pxCurt'), 8], [$('#pxRays'), 12], [el.pxBeauty, 20], [$('#pxPov'), 34]];
+const SEATL = [...document.querySelectorAll('#seatBox .lyr')].map(e => [e, +e.dataset.d]);
+
+/* ================= 金粉 ================= */
+const cv = $('#dust'), cx = cv.getContext('2d'); let DPR = 1, dustLevel = .35;
+const sprite = (() => { const c = document.createElement('canvas'); c.width = c.height = 64; const g = c.getContext('2d');
+  const r = g.createRadialGradient(32, 32, 0, 32, 32, 32); r.addColorStop(0, 'rgba(255,248,220,1)'); r.addColorStop(.25, 'rgba(255,214,130,.85)'); r.addColorStop(1, 'rgba(255,170,60,0)');
+  g.fillStyle = r; g.fillRect(0, 0, 64, 64); return c; })();
+const motes = [], sparks = [];
+function resizeDust(){
+  DPR = Math.min(devicePixelRatio || 1, lowPower ? 1.25 : 2); cv.width = W*DPR; cv.height = H*DPR; cv.style.width = W + 'px'; cv.style.height = H + 'px'; cx.setTransform(DPR, 0, 0, DPR, 0, 0);
+  if (!motes.length) for (let i = 0; i < (lowPower ? 42 : 140); i++){ const z = .15 + Math.random()*.85; motes.push({ x:Math.random()*W, y:Math.random()*H, z, ph:Math.random()*6.28, vx:(Math.random() - .5)*.12, vy:-(.06 + z*.28) }); }
+}
+function burst(x, y, n, spd = 5, up = 1.2){ for (let i = 0; i < n; i++){ const a = Math.random()*6.28, v = (.3 + Math.random())*spd; sparks.push({ x, y, vx:Math.cos(a)*v, vy:Math.sin(a)*v - up, life:1, r:2 + Math.random()*5, d:.008 + Math.random()*.014 }); } }
+function drawDust(now, dt){
+  if(lowPower && window.LOAD_STATE?.phase==='welcome')return;
+  cx.clearRect(0, 0, W, H); cx.globalCompositeOperation = 'lighter'; const k = dt/16.7;
+  for (const p of motes){
+    p.x += p.vx*k; p.y += p.vy*k; if (p.y < -20){ p.y = H + 20; p.x = Math.random()*W; } if (p.x < -20) p.x = W + 20; if (p.x > W + 20) p.x = -20;
+    const tw = .35 + .65*(.5 + .5*Math.sin(now/650 + p.ph)); const a = dustLevel*tw*(.25 + .75*p.z); if (a < .01) continue;
+    const s = 3 + p.z*11; cx.globalAlpha = a; cx.drawImage(sprite, p.x - mx*60*p.z - s/2, p.y - my*30*p.z - s/2, s, s);
+  }
+  for (let i = sparks.length - 1; i >= 0; i--){ const p = sparks[i];
+    p.x += p.vx*k; p.y += p.vy*k; p.vx *= .97; p.vy = p.vy*.97 + .05*k; p.life -= p.d*k; if (p.life <= 0){ sparks.splice(i, 1); continue; }
+    const s = p.r*4*p.life + 2; cx.globalAlpha = Math.min(1, p.life*1.4); cx.drawImage(sprite, p.x - s/2, p.y - s/2, s, s); }
+  cx.globalAlpha = 1;
+}
+
+/* ================= 金币：精准锚点 ================= */
+// 锚点由图像 alpha 实测：美人手两枚指甲尖之间 (0.455, 0.842)；第一人称掌心 (0.47, 0.505)
+const coin = { mode:'hidden', fly:null };
+function anchor(e, fx, fy, fs){ const r = rectL(e); return { x:r.left + r.width*fx, y:r.top + r.height*fy, s:r.width*fs }; }
+const A = {
+  beauty: () => Object.assign(anchor(el.beautyImg, .455, .845, .125), { o:+getComputedStyle(el.beauty).opacity, rx:0 }),
+  pov:    () => Object.assign(anchor(el.povImg, .47, .505, .17), { o:1, rx:58 }),
+};
+function flyCoin(fromFn, toFn, dur, opt = {}){
+  return new Promise(res => { const from = fromFn(); coin.fly = { from, toFn, dur, t0:CLOCK, lift:opt.lift ?? .32, spin:opt.spin ?? 1440, done:res, next:opt.next || 'hidden' }; coin.mode = 'fly'; });
+}
+function shock(x, y, size, tilt = 62, dur = 900){
+  const s = document.createElement('div'); s.className = 'shock'; app.appendChild(s);
+  s.style.width = s.style.height = size + 'px';
+  anim(s, [{ transform:`translate(${x - size/2}px,${y - size/2}px) rotateX(${tilt}deg) scale(.2)`, opacity:1 }, { transform:`translate(${x - size/2}px,${y - size/2}px) rotateX(${tilt}deg) scale(1.6)`, opacity:0 }], { duration:dur, easing:'cubic-bezier(.1,.7,.3,1)' }).finished.then(() => s.remove());
+  const st = document.createElement('div'); st.className = 'streak'; app.appendChild(st); const w = size*5;
+  st.style.width = w + 'px';
+  anim(st, [{ transform:`translate(${x - w/2}px,${y}px) scaleX(.1)`, opacity:0 }, { transform:`translate(${x - w/2}px,${y}px) scaleX(1)`, opacity:1, offset:.25 }, { transform:`translate(${x - w/2}px,${y}px) scaleX(1.3)`, opacity:0 }], { duration:dur*1.1, easing:'ease-out' }).finished.then(() => st.remove());
+}
+function updateCoin(now){
+  let p;
+  if (coin.mode === 'hidden'){ el.coin.style.opacity = 0; el.ring.style.opacity = 0; return; }
+  if (coin.mode === 'beauty'){ p = A.beauty(); p.r = Math.sin(now/620)*24; p.rz = Math.sin(now/900)*6; }
+  else if (coin.mode === 'pov'){ p = A.pov(); p.r = Math.sin(now/1100)*8; p.rz = -10; }
+  else if (coin.mode === 'fly'){
+    const f = coin.fly, t = Math.min(1, (CLOCK - f.t0)/f.dur), to = f.toFn(), a = f.from;
+    const c = { x:(a.x + to.x)/2, y:Math.min(a.y, to.y) - H*f.lift };
+    const u = ease.inOut(t)*.3 + t*.7, iu = 1 - u;
+    p = { x:iu*iu*a.x + 2*iu*u*c.x + u*u*to.x, y:iu*iu*a.y + 2*iu*u*c.y + u*u*to.y,
+          s:lerp(a.s, to.s, ease.in(t)) * (1 + Math.sin(t*Math.PI)*.35), o:lerp(a.o ?? 1, 1, Math.min(1, t*3)),
+          r:f.spin*ease.out(t), rz:Math.sin(t*Math.PI)*25, rx:lerp(a.rx || 0, to.rx || 0, ease.in(t)) };
+    if (t >= 1){ coin.mode = f.next; const d = f.done; coin.fly = null; d(p); }
+  }
+  el.coin.style.width = el.coin.style.height = p.s + 'px'; el.coin.style.opacity = p.o;
+  el.coin.style.transform = `translate3d(${p.x - p.s/2}px,${p.y - p.s/2}px,0) perspective(700px) rotateX(${p.rx || 0}deg) rotateY(${p.r}deg) rotateZ(${p.rz || 0}deg)`;
+  const rs = p.s*1.35; el.ring.style.width = el.ring.style.height = rs + 'px'; el.ring.style.transform = `translate3d(${p.x - rs/2}px,${p.y - rs/2}px,0)`;
+  el.ring.style.opacity = el.ring.classList.contains('on') ? '' : 0;
+}
+
+/* ================= 大厅镜头 ================= */
+let SCENE = 'intro', hallZoom = 1.16;
+const cam = { s:1, x:0, y:0 };
+function setCamRaw(s, x, y, roll = 0){ cam.s = s; cam.x = x; cam.y = y; el.cam.style.transform = `translate(${x}px,${y}px) scale(${s})`; el.scIntro.style.transform = roll ? `rotate(${roll}deg)` : ''; }
+function setCam(z){ setCamRaw(z, W/2*(1 - z), H/2*(1 - z)); }
+
+/* ================= 主循环 ================= */
+const FRAME_HOOKS = [], LAYOUT_HOOKS = [], DOWN_HOOKS = [];
+let lastT = performance.now();
+function frame(now){
+  if(document.hidden || (lowPower && now-lastT<32)){requestAnimationFrame(frame);return;}
+  const dt = Math.min(50, now - lastT); lastT = now;
+  if (FREEZE){ requestAnimationFrame(frame); return; }
+  CLOCK += dt; now = CLOCK;
+  if (performance.now() - lastMove > 2500){ tmx = Math.sin(now/5200)*.35; tmy = Math.sin(now/7100)*.2; }
+  const k = parallaxOn ? 1 : 0;
+  mx += (tmx*k - mx)*.05; my += (tmy*k - my)*.05;
+  if (SCENE === 'intro' || SCENE === 'hall' || SCENE === 'walk') for (const [e, d] of PX) e.style.transform = `translate3d(${-mx*d}px,${-my*d*.6}px,0)`;
+  if (SCENE === 'seat') for (const [e, d] of SEATL) e.style.transform = `translate3d(${-mx*d}px,${-my*d*.55}px,0)`;
+  if (SCENE === 'top') el.topTilt.style.transform = `rotateX(${my*3.2}deg) rotateY(${-mx*4}deg)`;
+  if (SCENE === 'hall'){ hallZoom += (1.045 - hallZoom)*.0007; setCam(hallZoom); }
+  for (const h of FRAME_HOOKS) h(now, dt);
+  updateCoin(now); drawDust(now, dt);
+  requestAnimationFrame(frame);
+}
+
+/* ================= 文字 / 等待 ================= */
+let capTimer;
+function caption(t){ clearTimeout(capTimer); el.caption.classList.remove('on'); if (!t) return; capTimer = setTimeout(() => { el.caption.textContent = t; el.caption.classList.add('on'); }, 450); }
+function hint(t){ if (!t){ el.hint.classList.remove('on'); return; } el.hint.textContent = t; el.hint.classList.add('on'); }
+let waitRes = null;
+function waitTap(text, auto){
+  hint(text);
+  return new Promise(res => { const me = () => { waitRes = null; hint(''); res(); }; waitRes = me; sleep(auto).then(() => { if (waitRes === me) me(); }); });
+}
+
+/* ================= 开场：揭幕 ================= */
+function setReveal(p){
+  const SP = 15, h = p*(50 + SP);
+  const L1 = 50 - h, L2 = Math.min(50, L1 + SP), R2 = 50 + h, R1 = Math.max(50, R2 - SP);
+  const m = `linear-gradient(90deg,#000 0%,#000 ${L1}%,transparent ${L2}%,transparent ${R1}%,#000 ${R2}%,#000 100%)`;
+  el.dark.style.webkitMaskImage = m; el.dark.style.maskImage = m; el.dark.style.opacity = 1;
+  const fo = Math.sin(Math.PI*Math.min(1, p*1.05));
+  el.frontL.style.left = (L1 + L2)/2 + '%'; el.frontR.style.left = (R1 + R2)/2 + '%'; el.frontL.style.opacity = el.frontR.style.opacity = fo;
+  hallZoom = 1.16 - .16*p; setCam(hallZoom);
+  el.bgImg.style.filter = `brightness(${.3 + .72*p}) saturate(${.85 + .25*p}) blur(${(1 - p)*2}px)`;
+  el.fg.style.opacity = p;
+  el.curtL.style.transform = `translateX(calc(-3.4cqw - ${p*104}%)) skewX(${-p*4}deg)`;
+  el.curtR.style.transform = `translateX(calc(3.4cqw + ${p*104}%)) skewX(${p*4}deg)`;
+  el.rays.style.opacity = Math.max(0, 1 - p*1.3);
+  el.seamGlow.style.opacity = Math.max(0, 1 - p*1.6);
+  el.seamGlow.style.transform = `translateX(-50%) scaleX(${1.6 + p*4})`;
+  dustLevel = .45 + .55*p;
+}
+function tween(dur, fn, tok){ return new Promise(res => { const t0 = CLOCK; const st = () => { if (tok !== TOK) return res(); const t = Math.min(1, (CLOCK - t0)/dur); fn(t); t < 1 ? requestAnimationFrame(st) : res(); }; requestAnimationFrame(st); }); }
+
+let TOK = 0;
+async function runIntro(){
+  const tok = ++TOK, alive = () => tok === TOK;
+  const drops = [...document.querySelectorAll('.drop')], sways = [...document.querySelectorAll('.sway')];
+  setCam(hallZoom);
+  // 1 · 两片红布从上而下
+  await sleep(700); if (!alive()) return;
+  sfx.whoosh();
+  drops.forEach((d, i) => anim(d, [
+    { transform:'translateY(-135%)', easing:'cubic-bezier(.5,0,.85,.35)' },
+    { transform:'translateY(1.6%)', offset:.7, easing:'cubic-bezier(.2,.7,.4,1)' },
+    { transform:'translateY(-.9%)', offset:.85, easing:'ease-in-out' },
+    { transform:'translateY(0)' }], { duration:1750, delay:i*140 }));
+  anim(el.dark, [{ opacity:.35 }, { opacity:1 }], { duration:1500, delay:500 });
+  await sleep(1240); if (!alive()) return;
+  sfx.thump(); burst(W*.5, H*.98, 30, 4, 2);
+  sways.forEach((s, i) => s.animate([{ transform:'skewX(0) scaleY(1)' }, { transform:'skewX(1.4deg) scaleY(1.012)' }, { transform:'skewX(-.9deg) scaleY(.996)' }, { transform:'skewX(.4deg) scaleY(1.002)' }, { transform:'skewX(0) scaleY(1)' }], { duration:2000, delay:i*140, easing:'ease-out' }));
+  caption('帷幕落下，满堂灯火，俱寂。');
+  await sleep(1300); if (!alive()) return;
+  await waitTap('轻 触 帷 幕', 6500); if (!alive()) return;
+
+  // 2 · 中缝微启，美人之手伸出（金币夹在两枚指甲之间）
+  sfx.part(); caption('红绸之后，有人递来一枚金币。');
+  el.curtL.style.transition = el.curtR.style.transition = 'transform 1.4s cubic-bezier(.3,.7,.2,1)';
+  el.curtL.style.transform = 'translateX(-3.4cqw)'; el.curtR.style.transform = 'translateX(3.4cqw)';
+  anim(el.seamGlow, [{ opacity:0, transform:'translateX(-50%) scaleX(.2)' }, { opacity:.85, transform:'translateX(-50%) scaleX(1)' }], { duration:1400, easing:'ease-out' });
+  await sleep(450); if (!alive()) return;
+  el.pxBeauty.classList.remove('behind');
+  coin.mode = 'beauty';
+  await anim(el.beauty, [
+    { opacity:0, transform:'translateY(-28%) scale(.78)', filter:'blur(10px) brightness(.25)' },
+    { opacity:1, transform:'translateY(0) scale(1)', filter:'blur(0) brightness(1)' }], { duration:1700, easing:'cubic-bezier(.2,.8,.2,1)' }).finished;
+  if (!alive()) return;
+  const idle = el.beauty.animate([{ transform:'translateY(0) rotate(0)' }, { transform:'translateY(1.2%) rotate(.8deg)' }, { transform:'translateY(0) rotate(0)' }], { duration:3200, iterations:Infinity, easing:'ease-in-out', composite:'add' });
+  el.ring.classList.add('on');
+  await waitTap('接 住 它', 7000); if (!alive()) return;
+  el.ring.classList.remove('on');
+
+  // 3 · 指尖一弹；第一人称的手接住
+  sfx.ting(); caption('');
+  idle.cancel();
+  anim(el.beauty, [{ transform:'translateY(0) rotate(0)' }, { transform:'translateY(-1.8%) rotate(-6deg)', offset:.18 }, { transform:'translateY(0) rotate(0)' }], { duration:760, easing:'cubic-bezier(.3,.9,.3,1)' });
+  const sp = A.beauty(); burst(sp.x, sp.y, 18, 3.4); shock(sp.x, sp.y, sp.s*2.4, 0, 600);
+  el.pxBeauty.classList.add('behind');
+  anim(el.pov, [{ transform:'translateY(110%) rotate(6deg)' }, { transform:'translateY(0) rotate(0)' }], { duration:1000, easing:'cubic-bezier(.2,.8,.25,1)' });
+  const land = await flyCoin(A.beauty, A.pov, 1450, { lift:.34, spin:1440, next:'pov' }); if (!alive()) return;
+  sfx.clink(); burst(land.x, land.y, 40, 6); shock(land.x, land.y, land.s*3.2, 62, 1000);
+  anim(el.palmGlow, [{ opacity:0, scale:.6 }, { opacity:1, scale:1, offset:.2 }, { opacity:.35, scale:1.1 }], { duration:1400, easing:'ease-out' });
+  caption('接住了。');
+  el.pov.animate([{ transform:'translateY(0)' }, { transform:'translateY(3.5%) rotate(1.5deg)' }, { transform:'translateY(0)' }], { duration:520, easing:'cubic-bezier(.3,.8,.3,1)', composite:'add' });
+  await sleep(500); if (!alive()) return;
+  anim(el.beauty, [{ opacity:1, transform:'translateY(0) scale(1)', filter:'blur(0) brightness(1)' }, { opacity:0, transform:'translateY(-30%) scale(.85)', filter:'blur(8px) brightness(.4)' }], { duration:1300, easing:'cubic-bezier(.5,0,.6,1)' });
+  await sleep(900); if (!alive()) return;
+
+  // 4 · 金光从红布中缝散出
+  sfx.shimmer(); caption('金光，自红绸间倾泻而出。');
+  el.seamGlow.getAnimations().forEach(a => a.cancel());
+  await Promise.all([
+    anim(el.seamGlow, [{ opacity:.85, transform:'translateX(-50%) scaleX(1)' }, { opacity:1, transform:'translateX(-50%) scaleX(1.6)' }], { duration:1300, easing:'ease-in' }).finished,
+    anim(el.rays, [{ opacity:0, transform:'rotate(0deg) scale(.6)' }, { opacity:1, transform:'rotate(20deg) scale(1)' }], { duration:1400, easing:'ease-out', composite:'add' }).finished,
+  ]); if (!alive()) return;
+  el.seamGlow.getAnimations().forEach(a => a.cancel()); el.rays.getAnimations().forEach(a => a.cancel());
+  el.rays.style.opacity = 1; el.seamGlow.style.opacity = 1; el.seamGlow.style.transform = 'translateX(-50%) scaleX(1.6)';
+  anim(el.flash, [{ opacity:0 }, { opacity:.75, offset:.25 }, { opacity:0 }], { duration:1800, easing:'ease-out' });
+  burst(W/2, H*.42, 80, 9);
+
+  // 5 · 红布退去，画面由中间向两侧由黑转亮；第一人称的手携币落下
+  sfx.pad(); caption('');
+  el.curtL.style.transition = el.curtR.style.transition = 'none';
+  anim(el.pov, [{ transform:'translateY(0)' }, { transform:'translateY(125%) rotate(8deg)' }], { duration:2600, delay:900, easing:'cubic-bezier(.6,0,.7,.5)' });
+  await tween(3200, t => setReveal(ease.inOut(t)), tok); if (!alive()) return;
+  toHall();
+}
+function toHall(){
+  TOK++;
+  SCENE = 'hall';
+  [el.dark, el.seamGlow, el.rays, el.flash, el.palmGlow].forEach(e => e.getAnimations().filter(a => !(a instanceof CSSAnimation)).forEach(a => a.cancel()));
+  [...document.querySelectorAll('.drop')].forEach(d => { d.getAnimations().forEach(a => a.cancel()); d.style.transform = 'translateY(0)'; });
+  setReveal(1);
+  el.dark.style.opacity = 0; el.frontL.style.opacity = el.frontR.style.opacity = 0; el.rays.style.opacity = 0; el.seamGlow.style.opacity = 0;
+  el.beauty.getAnimations().forEach(a => a.cancel()); el.beauty.style.opacity = 0;
+  el.pov.getAnimations().forEach(a => a.cancel()); el.pov.style.transform = 'translateY(130%)';
+  el.shafts.style.transition = 'opacity 2.5s'; el.shafts.style.opacity = 1;
+  coin.mode = 'hidden'; el.ring.classList.remove('on'); waitRes = null; caption('');
+  el.skipBtn.classList.add('off'); el.againBtn.classList.remove('off');
+  el.frame.classList.add('on');
+  el.hot.classList.add('on');
+  // 邀请：赌桌依次泛起金光
+  const paths = [...document.querySelectorAll('.tbl')];
+  paths.forEach((p, i) => setTimeout(() => { p.classList.add('ping'); setTimeout(() => p.classList.remove('ping'), 700); }, 600 + i*220));
+  setTimeout(() => { if (SCENE === 'hall') hint('择 一 桌 · 入 座'); }, 1200);
+}
+
+/* ================= 大厅：可点击的每一张赌桌 ================= */
+const tag = el.tblTag;
+document.querySelectorAll('.tbl').forEach(p => {
+  p.addEventListener('pointerenter', () => { if (SCENE !== 'hall') return; p.classList.add('hover'); const b = p.getBBox();
+    tag.style.left = (b.x + b.width/2)/1568*100 + '%'; tag.style.top = b.y/882*100 + '%'; tag.classList.add('on'); sfx.pop(); });
+  p.addEventListener('pointerleave', () => { p.classList.remove('hover'); tag.classList.remove('on'); });
+  p.addEventListener('click', e => { e.stopPropagation(); if (SCENE === 'hall') walkTo(p); });
+});
+
+async function walkTo(p){
+  SCENE = 'walk'; hint(''); el.hot.classList.remove('on'); tag.classList.remove('on');
+  p.classList.add('hover'); setTimeout(() => p.classList.remove('hover'), 900);
+  parallaxOn = false;
+  const b = p.getBBox();
+  const cxw = p.dataset.tx ? +p.dataset.tx : b.x + b.width/2, cyw = p.dataset.ty ? +p.dataset.ty : b.y + b.height*.45;
+  const P = { x:WB.x + cxw/1568*WB.w, y:WB.y + cyw/882*WB.h };     // cam 前的坐标
+  const S0 = cam.s, X0 = cam.x, Y0 = cam.y, Sx = +p.dataset.s;
+  const C = { x:W/2, y:H*.6 };
+  const start = { x:X0 + S0*P.x, y:Y0 + S0*P.y };
+  const steps = Sx > 3 ? 7 : Sx > 2 ? 5 : 3, dur = 1100 + steps*480;
+  let lastStep = -1;
+  sfx.step(.6);
+  await tween(dur, t => {
+    const e = ease.sine(t);
+    const s = lerp(S0, Sx, e);
+    const sx = lerp(start.x, C.x, e), sy = lerp(start.y, C.y, e);
+    const ph = t*steps, env = Math.sin(Math.PI*Math.min(1, t*1.15));
+    const bobY = -Math.abs(Math.sin(ph*Math.PI))*H*.016*env + H*.008*env;
+    const bobX = Math.sin(ph*Math.PI)*W*.004*env;
+    const roll = Math.sin(ph*Math.PI)*.55*env;
+    setCamRaw(s, sx - s*P.x + bobX, sy - s*P.y + bobY, roll);
+    const st = Math.floor(ph + .5); if (st !== lastStep){ lastStep = st; if (st > 0 && st <= steps) sfx.step(.8 + Math.random()*.3); }
+    el.fgCam.style.transform = `scale(${1 + (s - 1)*1.7}) translate(${(W/2 - P.x)*e*.25}px,${(H/2 - P.y)*e*.15}px)`;
+    el.fgCam.style.opacity = 1 - clamp01(e*1.6);
+    el.bgImg.style.filter = `brightness(${1.02 - e*.25}) saturate(1.1) blur(${Math.pow(e, 3)*3}px)`;
+    el.blink.style.opacity = clamp01((t - .8)/.2);
+  }, TOK);
+  // 落座：视线下沉，眨眼
+  sfx.sit();
+  await sleep(250);
+  enterSeat();
+}
+
+/* ================= 入座 ================= */
+const MOUTH = { x:68.6, y:19.2 };   // 头头猫唇部（seatBox 百分比）
+const LINES = [
+  { t:'哟——', x:57.5, y:5, v:1, size:3.4, rot:-3 },
+  { t:'迷路的小客人？', x:33, y:12.5, size:3.1, rot:3.5 },
+  { t:'这张桌子，\n可不是谁都坐得的。', x:24, y:3, v:1, size:2.6, rot:-1.5 },
+  { t:'……不过嘛，', x:45, y:39, size:2.3, rot:-5, cls:'small' },
+  { t:'要不要\n来赌一场？', x:6.5, y:13, v:1, size:5.4, rot:2, big:1, stamp:'赌' },
+];
+const TEASE = [
+  { t:'只有一个答案哦。', x:38, y:46, size:2.2, rot:4, cls:'small' },
+  { t:'嗯？', x:60, y:28, size:2.8, rot:-6 },
+  { t:'手边那枚。', x:16, y:50, size:2.4, rot:-3, cls:'small' },
+];
+let lineIdx = 0, teaseIdx = 0, seatState = 'idle';
+function say(layer, s, from){
+  const b = document.createElement('div');
+  b.className = 'bub' + (s.v ? ' v' : '') + (s.big ? ' big' : '') + (s.cls ? ' ' + s.cls : '');
+  b.style.left = s.x + '%'; b.style.top = s.y + '%'; b.style.setProperty('--fs', s.size); b.style.setProperty('--rot', (s.rot || 0) + 'deg');
+  let k = 0;
+  b.innerHTML = s.t.split('\n').map(L => '<span class="ln">' + [...L].map(c => `<i style="--k:${k++}">${c}</i>`).join('') + '</span>').join('')
+    + (s.stamp ? `<span class="stamp">${s.stamp}</span>` : '');
+  layer.querySelectorAll('.bub,.lead,.leadDot').forEach(o => o.classList.add('old'));
+  layer.appendChild(b);
+  if (from){
+    const svg = layer.querySelector('svg'), lr = rectL(layer), br = rectL(b);
+    const bx = clamp01((from.x/100*lr.width + lr.left - br.left)/br.width), by = clamp01((from.y/100*lr.height + lr.top - br.top)/br.height);
+    const ex = (br.left + br.width*bx - lr.left)/lr.width*1000, ey = (br.top + br.height*by - lr.top)/lr.height*1000;
+    const fx = from.x*10, fy = from.y*10, mxp = (fx + ex)/2, myp = (fy + ey)/2;
+    const dx = ex - fx, dy = ey - fy, n = Math.hypot(dx, dy) || 1, bend = .22*n;
+    const path = document.createElementNS('http://www.w3.org/2000/svg', 'path');
+    path.setAttribute('d', `M${fx + dx*.08},${fy + dy*.08} Q${mxp - dy/n*bend},${myp + dx/n*bend} ${ex},${ey}`);
+    path.setAttribute('class', 'lead'); path.setAttribute('pathLength', '1'); svg.appendChild(path);
+    const dot = document.createElementNS('http://www.w3.org/2000/svg', 'circle'); dot.setAttribute('cx', ex); dot.setAttribute('cy', ey); dot.setAttribute('r', 3.5); dot.setAttribute('class', 'leadDot'); svg.appendChild(dot);
+  }
+  sfx.pop();
+  return b;
+}
+async function enterSeat(){
+  const tok=TOK;hint('正在备妥牌桌');
+  await Promise.race([Promise.all(['seat','cat','tnear','cback','cfront'].map(k=>applyAsset(k))),sleep(7000)]);
+  if(tok!==TOK)return;hint('');
+  SCENE = 'seat';
+  el.scSeat.classList.remove('off');
+  el.scIntro.classList.add('off'); el.frame.classList.remove('on');
+  parallaxOn = true; mx = my = 0;
+  anim(el.seatBox, [{ transform:'translateY(7%) scale(1.08)', filter:'blur(10px) brightness(.4)' }, { transform:'translateY(0) scale(1)', filter:'blur(0) brightness(1)' }], { duration:1900, easing:'cubic-bezier(.2,.7,.2,1)' })
+    .finished.then(() => { el.seatBox.getAnimations().forEach(a => a.cancel()); el.seatBox.animate([{ transform:'scale(1)' }, { transform:'scale(1.012) translateY(-.3%)' }], { duration:6000, iterations:Infinity, direction:'alternate', easing:'ease-in-out' }); });
+  anim(el.blink, [{ opacity:1 }, { opacity:0 }], { duration:1300, easing:'ease-out' });
+  setTimeout(() => el.nameTag.classList.add('on'), 1100);
+  startFlourish();
+  setTimeout(() => { if (SCENE === 'seat' && lineIdx === 0) hint('轻 触 她 · 或 任 意 处'); }, 2000);
+  seatState = 'talk';
+}
+function seatTap(onCat){
+  if (seatState !== 'talk' && seatState !== 'choice') return;
+  hint('');
+  if (onCat){ anim(el.catInner, [{ rotate:'0deg' }, { rotate:'-1.4deg' }, { rotate:'0deg' }], { duration:700, easing:'ease-out', composite:'add' }); const r = rectL(el.catImg); burst(r.left + r.width*.52, r.top + r.height*.16, 10, 2); }
+  if (seatState === 'choice'){ say(el.seatTalk, TEASE[teaseIdx++ % TEASE.length], MOUTH); anim(el.chip.querySelector('.disc'), [{ transform:'translateZ(0)' }, { transform:'translateZ(26px)' }, { transform:'translateZ(0)' }], { duration:600 }); return; }
+  if (lineIdx < LINES.length){
+    say(el.seatTalk, LINES[lineIdx], MOUTH); lineIdx++;
+    el.seatBg.classList.add('focusFar');
+    if (lineIdx === LINES.length) setTimeout(showChip, 1500);
+  }
+}
+function showChip(){
+  seatState = 'choice';
+  el.cat.classList.add('soft'); el.tableImg.classList.remove('dim');   // 焦点拉向桌面
+  anim(el.chip, [{ opacity:0, transform:'rotateX(66deg) translateZ(260px) rotateZ(-200deg)' }, { opacity:1, transform:'rotateX(66deg) translateZ(0) rotateZ(0deg)', offset:.8 }, { opacity:1, transform:'rotateX(66deg) translateZ(14px) rotateZ(0deg)', offset:.9 }, { opacity:1, transform:'rotateX(66deg) translateZ(0) rotateZ(0deg)' }],
+    { duration:1100, easing:'cubic-bezier(.3,.6,.3,1)' }).finished.then(() => { el.chip.classList.add('on'); sfx.metal(.35); });
+  anim(el.chipNote, [{ opacity:0, transform:'rotate(-4deg) translateY(-10px)' }, { opacity:.85, transform:'rotate(-4deg)' }], { duration:1200, delay:900 });
+  setTimeout(() => { if (seatState === 'choice') hint('应 下 便 是'); }, 1800);
+}
+el.chip.addEventListener('pointerenter', () => el.chip.classList.add('hover'));
+el.chip.addEventListener('pointerleave', () => el.chip.classList.remove('hover'));
+el.chip.addEventListener('click', async e => {
+  e.stopPropagation(); if (seatState !== 'choice') return;
+  seatState = 'go'; el.chip.classList.remove('on'); hint('');
+  const r = rectL(el.chip.querySelector('.disc')), x = r.left + r.width/2, y = r.top + r.height/2;
+  sfx.seal(); burst(x, y, 40, 5);
+  for (let i = 0; i < 3; i++){ const ring = document.createElement('div'); ring.className = 'inkRing'; app.appendChild(ring); const s = r.width*(1 + i*.5);
+    Object.assign(ring.style, { left:x - s/2 + 'px', top:y - s/2 + 'px', width:s + 'px', height:s*.55 + 'px', marginTop:s*.22 + 'px' });
+    anim(ring, [{ transform:'scale(.4)', opacity:1 }, { transform:'scale(1.8)', opacity:0 }], { duration:900, delay:i*120, easing:'cubic-bezier(.1,.7,.3,1)' }).finished.then(() => ring.remove()); }
+  anim(el.chip.querySelector('.disc'), [{ transform:'translateZ(18px)', filter:'brightness(1)' }, { transform:'translateZ(-6px) scale(.92)', filter:'brightness(1.6)', offset:.3 }, { transform:'translateZ(0) scale(1)', filter:'brightness(1)' }], { duration:600 });
+  anim(el.chipNote, [{ opacity:.85 }, { opacity:0 }], { duration:500 });
+  el.cat.classList.remove('soft');
+  await sleep(500);
+  say(el.seatTalk, { t:'好。', x:50, y:22, size:7, rot:-4, big:1 }, MOUTH);
+  anim(el.catInner, [{ translate:'0 0' }, { translate:'0 -0.6%' }, { translate:'0 0' }], { duration:600, composite:'add' });
+  await sleep(1100);
+  throwItems();
+});
+/* 她手中翻飞的牌 */
+let flourishOn = false;
+function startFlourish(){
+  if (flourishOn) return; flourishOn = true;
+  const f1 = $('#flick1'), f2 = $('#flick2');
+  const loop = async () => {
+    while (SCENE === 'seat'){
+      // 单位为牌自身尺寸的百分比：从左手(0.56,0.33)抛起，越过头顶附近，落回牌扇(0.50,0.29)
+      for (const [f, px, py, d] of [[f1, -90, -290, 0], [f2, -150, -250, 230]]){
+        anim(f, [
+          { opacity:0, transform:'translate(0%,0%) rotateZ(0deg) rotateY(0deg)' },
+          { opacity:1, transform:`translate(${px*.45}%,${py*.55}%) rotateZ(-40deg) rotateY(180deg)`, offset:.28 },
+          { opacity:1, transform:`translate(${px}%,${py}%) rotateZ(-90deg) rotateY(360deg)`, offset:.55 },
+          { opacity:1, transform:`translate(-110%,-180%) rotateZ(-130deg) rotateY(540deg)`, offset:.8 },
+          { opacity:0, transform:'translate(-115%,-77%) rotateZ(-160deg) rotateY(720deg)' }], { duration:1300, delay:d, easing:'cubic-bezier(.3,.6,.4,1)', fill:'none' });
+      }
+      sfx.flutter(6);
+      await sleep(3200 + Math.random()*1800);
+    }
+    flourishOn = false;
+  };
+  loop();
+}
+
+/* ================= 甩出三物 · 视角由平视转为俯视 ================= */
+const POS = { card:[.208, .49], gun:[.5, .49], dice:[.792, .49] };
+const REST = {};
+function placeTopStatic(){
+  if (!TB) return;
+  // The table image stays full-bleed; portrait mode keeps every choice in view.
+  const narrow = W < H, px = x => (W*x - TB.x)/TB.w, py = y => (H*y - TB.y)/TB.h;
+  Object.assign(POS, narrow ? { card:[px(.29), py(.34)], gun:[px(.68), py(.53)], dice:[px(.34), py(.73)] } : { card:[.208, .49], gun:[.5, .49], dice:[.792, .49] });
+  for (const id of ['itCard','itGun','itDice','shCard','shGun','shDie0','shDie1']) document.getElementById(id).style.scale = narrow ? Math.min(1, W*2/TB.w) : '1';
+  const set = (id, fx, fy) => { const e = document.getElementById(id); e.style.left = fx*100 + '%'; e.style.top = fy*100 + '%'; };
+  set('itCard', ...POS.card); set('itGun', ...POS.gun); set('itDice', ...POS.dice);
+  set('shCard', ...POS.card); set('shGun', ...POS.gun); set('shDie0', ...POS.dice); set('shDie1', ...POS.dice);
+  const sc = $('#shCard'); sc.style.width = TB.w*.088 + 'px'; sc.style.height = TB.w*.132 + 'px'; sc.style.marginLeft = -TB.w*.044 + 'px'; sc.style.marginTop = -TB.w*.066 + 'px';
+  const sg = $('#shGun'); sg.style.marginLeft = -TB.w*.125 + 'px'; sg.style.marginTop = -TB.w*.0834 + 'px';
+  const ds = TB.w*.052;
+  [[-.022, -.04], [.028, .06]].forEach((o, i) => { const s = document.getElementById('shDie' + i); s.style.marginLeft = o[0]*TB.w - ds/2 + 'px'; s.style.marginTop = o[1]*TB.h - ds/2 + 'px'; });
+  // 标签错落摆放
+  const lb = (id, fx, fy) => { const e = document.getElementById(id); e.style.left = fx*100 + '%'; e.style.top = fy*100 + '%'; };
+  lb('lbCard', narrow ? px(.08) : .105, narrow ? py(.25) : .24); lb('lbGun', narrow ? px(.88) : .585, narrow ? py(.48) : .66); lb('lbDice', narrow ? px(.60) : .858, narrow ? py(.71) : .17);
+  // 圆形光圈（对应桌面三个下注区）
+  Object.values(POS).forEach((p, i) => { const g = document.getElementById('cg' + i), r = .099*TB.w; g.style.scale = narrow ? Math.min(1, W*2/TB.w) : '1';
+    Object.assign(g.style, { left:p[0]*TB.w - r + 'px', top:p[1]*TB.h - r + 'px', width:r*2 + 'px', height:r*2 + 'px' }); });
+}
+function buildDice(){
+  const PIPS = { 1:[5], 2:[1, 9], 3:[1, 5, 9], 4:[1, 3, 7, 9], 5:[1, 3, 5, 7, 9], 6:[1, 3, 4, 6, 7, 9] };
+  document.querySelectorAll('.die').forEach(d => { d.innerHTML = [1, 2, 3, 4, 5, 6].map(n => `<div class="f f${n}">` +
+    Array.from({ length:9 }, (_, i) => PIPS[n].includes(i + 1) ? '<span class="pip"></span>' : '<span></span>').join('') + '</div>').join(''); });
+}
+const FACE = { 1:[0, 0], 6:[0, 180], 3:[0, -90], 4:[0, 90], 2:[-90, 0], 5:[90, 0] };
+// 生成抛物 + 弹跳 + 旋转的关键帧
+function throwFrames(o){
+  const N = 48, kf = [], sk = [];
+  for (let i = 0; i <= N; i++){
+    const t = i/N; let x, y, z;
+    if (t <= o.land){ const u = t/o.land; x = lerp(o.sx, o.lx, ease.outQ(u)); y = lerp(o.sy, o.ly, ease.outQ(u)); z = lerp(o.sz, 0, u*u) + Math.sin(Math.PI*u)*o.arc; }
+    else { const u = (t - o.land)/(1 - o.land), e = ease.out(u); x = lerp(o.lx, 0, e); y = lerp(o.ly, 0, e); z = 0;
+      let acc = 0; for (const [b, h] of o.bounces || []){ const seg = b; if (u >= acc && u < acc + seg){ z = Math.sin(Math.PI*(u - acc)/seg)*h; break; } acc += seg; } }
+    const r = o.rot(t);
+    kf.push({ transform:`translate3d(${x}px,${y}px,${z}px) rotateZ(${r.z || 0}deg) rotateX(${r.x || 0}deg) rotateY(${r.y || 0}deg)`, offset:t });
+    const sz = Math.max(0, z);
+    sk.push({ transform:`translate(${x + sz*.22}px,${y + sz*.32}px) rotate(${r.z || 0}deg) scale(${1 + sz/700})`, opacity:Math.max(.08, .62 - sz/500), offset:t });
+  }
+  return [kf, sk];
+}
+async function throwItems(){
+  SCENE = 'tilt'; seatState = 'done'; hint('正在备妥三种赌法');
+  const tok = TOK;
+  await Promise.race([Promise.all(['ttop','gun','die','cback','cfront'].map(k=>applyAsset(k))),sleep(7000)]);
+  if(tok!==TOK)return;hint('');
+  el.scTop.classList.remove('off');
+  placeTopStatic();
+  // 视角：从平视下摇到俯视
+  el.seatBox.getAnimations().forEach(a => a.cancel());
+  anim(el.seatBox, [{ transform:'translateY(0) scale(1)', filter:'blur(0) brightness(1)', opacity:1 }, { transform:'translateY(-42%) scale(1.12)', filter:'blur(6px) brightness(.55)', opacity:0 }], { duration:2400, easing:'cubic-bezier(.55,0,.3,1)' });
+  anim(el.topPlane, [{ transform:'translateY(46%) rotateX(76deg) scale(1.25)', opacity:0 }, { opacity:1, offset:.3 }, { transform:'translateY(0) rotateX(0deg) scale(1)', opacity:1 }], { duration:2600, easing:'cubic-bezier(.5,0,.25,1)' });
+  sfx.swish();
+  const PW = TB.w, PH = TB.h, sx = (fx) => (.62 - fx)*PW, sy = (fy) => (-.32 - fy)*PH;
+  const go = (body, shadows, o, delay, dur) => {
+    const [kf, sk] = throwFrames(o);
+    anim(body, kf, { duration:dur, delay, easing:'linear', fill:'both' });
+    shadows.forEach(s => anim(s, sk, { duration:dur, delay, easing:'linear', fill:'both' }));
+  };
+  // 卡牌：飞旋 + 翻转，滑停
+  const cardRZ = -14;
+  go($('#bdCard'), [$('#shCard')], { sx:sx(POS.card[0]), sy:sy(POS.card[1]), sz:340, lx:PW*.02, ly:-PH*.02, land:.62, arc:60,
+    rot:t => ({ z:lerp(-900, cardRZ, ease.out(t)), y:lerp(1080, 0, ease.out(Math.min(1, t/.62))), x:lerp(-35, 0, Math.min(1, t/.62)) }) }, 450, 1700);
+  sleep(450).then(() => sfx.flutter(18)); sleep(450 + 1700*.62).then(() => sfx.swish());
+  REST.card = `rotateZ(${cardRZ}deg)`;
+  // 左轮：空中翻旋，落桌后原地打转，最终枪口对你
+  const gunRZ = 90;
+  go($('#bdGun'), [$('#shGun')], { sx:sx(POS.gun[0]), sy:sy(POS.gun[1]), sz:380, lx:-PW*.015, ly:PH*.03, land:.3, arc:80, bounces:[[.08, 26], [.05, 7]],
+    rot:t => ({ z:gunRZ - 1620*(1 - ease.out(t)), x:lerp(50, 0, Math.min(1, t/.3)) }) }, 700, 3600);
+  sleep(700 + 3600*.3).then(() => { sfx.metal(1); sfx.ratchet(16, 2.3); });
+  REST.gun = `rotateZ(${gunRZ}deg)`;
+  // 骰子：两颗翻滚弹跳
+  const faces = [1 + Math.floor(Math.random()*6), 1 + Math.floor(Math.random()*6)];
+  [0, 1].forEach(i => {
+    const d = document.getElementById('die' + i), sh = document.getElementById('shDie' + i);
+    const off = i ? [PW*.028, PH*.06] : [-PW*.022, -PH*.04];
+    d.style.left = `calc(var(--ds) * -.5 + ${off[0]}px)`; d.style.top = `calc(var(--ds) * -.5 + ${off[1]}px)`;
+    const [fx, fy] = FACE[faces[i]], spinX = 720 + 360*i, spinY = 1080 - 360*i, fz = i ? 22 : -16;
+    REST['die' + i] = `rotateZ(${fz}deg) rotateX(${fx}deg) rotateY(${fy}deg)`;
+    const [kf, sk] = throwFrames({ sx:sx(POS.dice[0]) - off[0], sy:sy(POS.dice[1]) - off[1], sz:300, lx:-PW*.05*(i ? .6 : 1), ly:-PH*.05, land:.4, arc:70, bounces:[[.22, 70], [.14, 24], [.09, 7]],
+      rot:t => { const e = ease.out(t); return { z:lerp(i ? -260 : 300, fz, e), x:lerp(fx + spinX, fx, e), y:lerp(fy - spinY, fy, e) }; } });
+    // 骰子：自身旋转需在 die 上，用 rotateZ X Y 次序
+    anim(d, kf, { duration:2500, delay:950 + i*120, easing:'linear', fill:'both' });
+    anim(sh, sk, { duration:2500, delay:950 + i*120, easing:'linear', fill:'both' });
+    [.4, .62, .76, .85].forEach((tt, j) => sleep(950 + i*120 + 2500*tt).then(() => sfx.dice(1 - j*.2)));
+  });
+  REST.faces = faces;
+  await sleep(3400); if (tok !== TOK) return;
+  el.scSeat.classList.add('off');
+  SCENE = 'top';
+  // 定格为静止态（取消动画，写入最终 transform）
+  finalizeRest();
+  ['lbCard', 'lbGun', 'lbDice'].forEach((id, i) => setTimeout(() => document.getElementById(id).classList.add('on'), i*260));
+  sayTop({ t:'挑一样吧，\n小客人。', x:15, y:11, v:1, size:3.6, rot:2 });
+  setTimeout(() => sayTop({ t:'——选中的，便是今晚的赌法。', x:31, y:6.5, size:2.4, rot:-2, cls:'small' }), 900);
+  hint('点 选 其 一');
+}
+function finalizeRest(){
+  const fix = (e, tr) => { e.getAnimations().forEach(a => a.cancel()); e.style.transform = tr; };
+  fix($('#bdCard'), REST.card); fix($('#bdGun'), REST.gun); fix($('#die0'), REST.die0); fix($('#die1'), REST.die1);
+  [['#shCard', REST.card], ['#shGun', REST.gun], ['#shDie0', 'rotate(-16deg)'], ['#shDie1', 'rotate(22deg)']].forEach(([s, tr]) => { const e = $(s); e.getAnimations().forEach(a => a.cancel()); e.style.transform = tr.replace('rotateZ', 'rotate'); e.style.opacity = .62; });
+  el.topPlane.getAnimations().forEach(a => a.cancel()); el.topPlane.style.transform = 'none'; el.topPlane.style.opacity = 1;
+}
+function sayTop(s){ if (W < H) s = { ...s, x:(W*.1 - TB.x)/TB.w*100, y:12, size:2.7, v:0 }; return say(el.topTalk, s, null); }
+
+/* ================= 俯视：三物交互 ================= */
+let selected = null, busy = false;
+const ITEMS = { card:$('#itCard'), gun:$('#itGun'), dice:$('#itDice') };
+const LBL = { card:$('#lbCard'), gun:$('#lbGun'), dice:$('#lbDice') };
+const CG = { card:$('#cg0'), gun:$('#cg1'), dice:$('#cg2') };
+const SHD = { card:['#shCard'], gun:['#shGun'], dice:['#shDie0', '#shDie1'] };
+const shadowOp = (k, v) => SHD[k].forEach(s => { const e = $(s); e.style.transition = 'opacity .6s'; e.style.opacity = v; });
+Object.entries(ITEMS).forEach(([k, it]) => {
+  const body = it.querySelector('.body');
+  body.addEventListener('pointerenter', ev => { if (ev.pointerType === 'touch') return; if (SCENE !== 'top' || selected) return; it.classList.add('hover'); LBL[k].classList.add('hi'); CG[k].classList.add('on'); sfx.pop(); });
+  body.addEventListener('pointerleave', () => { it.classList.remove('hover'); LBL[k].classList.remove('hi'); if (selected !== k) CG[k].classList.remove('on'); });
+  body.addEventListener('click', e => { e.stopPropagation(); if (SCENE !== 'top' || busy) return; pickItem(k); });
+});
+// Some mobile engines hit the full-bleed image through preserve-3d objects.
+// Resolve touch presses against the visible objects before the ordinary click.
+el.scTop.addEventListener('pointerdown', e => {
+  if (e.pointerType !== 'touch' || SCENE !== 'top' || busy) return;
+  for (const [k, item] of Object.entries(ITEMS)){
+    const hit = [...item.querySelectorAll(k === 'dice' ? '.die' : '.body')].some(body => {
+      const r = body.getBoundingClientRect();
+      return e.clientX >= r.left && e.clientX <= r.right && e.clientY >= r.top && e.clientY <= r.bottom;
+    });
+    if (hit){ e.preventDefault(); e.stopPropagation(); window.pickItem(k); return; }
+  }
+}, { capture:true });
+const LINES_TOP = {
+  card:[{ t:'红心皇后——\n是我哦。', x:22, y:12, v:1, size:3.8, rot:-2 }, { t:'翻得好，运气也好。', x:31, y:9, size:2.5, rot:3, cls:'small' }],
+  gun:[{ t:'六个膛，一颗子弹。', x:58, y:8, size:3, rot:2 }, { t:'你，敢么？', x:76, y:14, v:1, size:4.6, rot:-3, big:1 }],
+  dice:[{ t:'大，还是小？', x:40, y:8, size:3.4, rot:-3 }, { t:'由天定。', x:72, y:16, v:1, size:3.2, rot:4 }],
+};
+function centerOffset(k){ const [fx, fy] = POS[k]; return { x:(.5 - fx)*TB.w*.55, y:(.56 - fy)*TB.h }; }
+async function select(k){
+  if (selected) deselect(true);
+  selected = k; busy = true; hint('');
+  const it = ITEMS[k], lift = it.querySelector('.lift'), o = centerOffset(k);
+  it.classList.remove('hover');
+  Object.entries(ITEMS).forEach(([kk, e]) => { e.style.transition = 'opacity .6s,filter .6s'; e.style.opacity = kk === k ? 1 : .22; e.style.filter = kk === k ? '' : 'blur(2px)'; LBL[kk].style.opacity = kk === k ? 1 : .15; });
+  Object.values(CG).forEach(c => c.classList.remove('on'));
+  shadowOp(k, .12);
+  lift.style.transform = `translate3d(${o.x}px,${o.y}px,${TB.w*.13}px) scale(${k === 'gun' ? 1.35 : 1.75})`;
+  el.topTalk.querySelectorAll('.bub').forEach(b => b.classList.add('old'));
+  sfx.swish();
+  await sleep(450);
+  await act(k, true);
+  busy = false;
+  hint('再 点 一 次 · 或 点 空 处 放 回');
+}
+async function act(k, first){
+  busy = true;
+  const L = LINES_TOP[k];
+  if (k === 'card'){
+    const b = $('#bdCard'), flipped = b.dataset.f === '1';
+    const from = flipped ? 'rotateZ(0deg) rotateY(180deg)' : REST.card, to = flipped ? 'rotateZ(0deg) rotateY(0deg)' : 'rotateZ(0deg) rotateY(180deg)';
+    b.getAnimations().forEach(a => a.cancel());
+    await anim(b, [{ transform:from }, { transform:(flipped ? 'rotateZ(0deg) rotateY(90deg)' : 'rotateZ(-6deg) rotateY(90deg)') + ' translateZ(30px) scale(1.06)', offset:.5 }, { transform:to }], { duration:900, easing:'cubic-bezier(.3,.7,.3,1)' }).finished;
+    b.style.transform = to; b.dataset.f = flipped ? '0' : '1'; sfx.flutter(4);
+    if (!flipped){ const r = rectL(b); burst(r.left + r.width/2, r.top + r.height/2, 36, 5); sfx.shimmer(); }
+    if (first || !flipped){ sayTop(L[0]); setTimeout(() => sayTop(L[1]), 900); }
+  }
+  if (k === 'gun'){
+    const b = $('#bdGun'); b.getAnimations().forEach(a => a.cancel());
+    const base = first ? REST.gun : 'rotateZ(0deg)';
+    await anim(b, [{ transform:base }, { transform:'rotateZ(-380deg)', offset:.7 }, { transform:'rotateZ(-360deg)' }], { duration:1200, easing:'cubic-bezier(.2,.7,.2,1)' }).finished;
+    b.style.transform = 'rotateZ(0deg)'; sfx.ratchet(6, .35);
+    await sleep(380); sfx.click();
+    anim(b, [{ transform:'rotateZ(0deg) translateX(0)' }, { transform:'rotateZ(-7deg) translateX(-3%)', offset:.15 }, { transform:'rotateZ(0deg) translateX(0)' }], { duration:520, easing:'cubic-bezier(.2,.8,.3,1)' });
+    const r = rectL(b); popText('咔哒。', r.left + r.width*.82, r.top + r.height*.1, -8);
+    if (first){ sayTop(L[0]); setTimeout(() => sayTop(L[1]), 900); } else sayTop({ t:'空膛。运气不错嘛。', x:56 + Math.random()*10, y:6 + Math.random()*8, size:2.6, rot:-3 });
+  }
+  if (k === 'dice'){
+    const f = [1 + Math.floor(Math.random()*6), 1 + Math.floor(Math.random()*6)];
+    await Promise.all([0, 1].map(i => { const d = $('#die' + i), [fx, fy] = FACE[f[i]], fz = i ? 22 : -16;
+      const from = d.style.transform, to = `rotateZ(${fz}deg) rotateX(${fx}deg) rotateY(${fy}deg)`;
+      d.getAnimations().forEach(a => a.cancel());
+      [0, .45, .7].forEach((tt, j) => sleep(1200*tt + i*60).then(() => sfx.dice(1 - j*.25)));
+      return anim(d, [{ transform:from }, { transform:`translateZ(${TB.w*.06}px) rotateZ(${fz + 180}deg) rotateX(${fx + 540}deg) rotateY(${fy - 360}deg)`, offset:.4 },
+        { transform:`translateZ(0) rotateZ(${fz + 40}deg) rotateX(${fx + 90}deg) rotateY(${fy}deg)`, offset:.7 }, { transform:to }], { duration:1200, delay:i*60, easing:'cubic-bezier(.3,.6,.3,1)' }).finished.then(() => { d.style.transform = to; });
+    }));
+    const sum = f[0] + f[1], CN = ['', '一', '二', '三', '四', '五', '六', '七', '八', '九', '十', '十一', '十二'];
+    const r = rectL($('#bdDice')); popText(`${CN[sum]}点 · ${sum >= 7 ? '大' : '小'}`, r.left, r.top - TB.h*.12, 4); burst(r.left, r.top, 24, 4);
+    if (first){ sayTop(L[0]); setTimeout(() => sayTop(L[1]), 900); } else sayTop({ t:sum >= 7 ? '大。今晚手气旺呢。' : '小……啧，再来？', x:34 + Math.random()*16, y:6 + Math.random()*6, size:2.6, rot:3 });
+  }
+  busy = false;
+}
+function popText(t, x, y, rot){
+  const p = document.createElement('div'); p.className = 'pop'; p.textContent = t; p.style.setProperty('--pw', TB.w + 'px'); app.appendChild(p);
+  p.style.left = x + 'px'; p.style.top = y + 'px';
+  anim(p, [{ opacity:0, transform:`translate(-50%,-30%) rotate(${rot}deg) scale(1.4)`, filter:'blur(6px)' }, { opacity:1, transform:`translate(-50%,-80%) rotate(${rot}deg) scale(1)`, filter:'blur(0)', offset:.25 },
+    { opacity:1, transform:`translate(-50%,-95%) rotate(${rot}deg)`, offset:.75 }, { opacity:0, transform:`translate(-50%,-130%) rotate(${rot}deg)`, filter:'blur(4px)' }], { duration:1900, easing:'ease-out' }).finished.then(() => p.remove());
+}
+function deselect(quick){
+  if (!selected) return;
+  const k = selected, it = ITEMS[k];
+  it.querySelector('.lift').style.transform = ''; shadowOp(k, .62);
+  if (k === 'card'){ const b = $('#bdCard'); b.getAnimations().forEach(a => a.cancel()); anim(b, [{ transform:b.style.transform }, { transform:REST.card }], { duration:700, easing:'cubic-bezier(.3,.7,.3,1)' }).finished.then(() => { b.getAnimations().forEach(a => a.cancel()); b.style.transform = REST.card; }); b.dataset.f = '0'; }
+  if (k === 'gun'){ const b = $('#bdGun'); b.getAnimations().forEach(a => a.cancel()); anim(b, [{ transform:'rotateZ(0deg)' }, { transform:REST.gun }], { duration:800, easing:'cubic-bezier(.3,.7,.3,1)' }).finished.then(() => { b.getAnimations().forEach(a => a.cancel()); b.style.transform = REST.gun; }); }
+  Object.entries(ITEMS).forEach(([kk, e]) => { e.style.opacity = 1; e.style.filter = ''; LBL[kk].style.opacity = ''; });
+  selected = null;
+  if (!quick){ hint('点 选 其 一'); sfx.swish(); }
+}
+
+/* ================= 全局点击 ================= */
+app.addEventListener('pointerdown', e => {
+  if (e.target.closest('button') || e.target.closest('#loader')) return;
+  if (waitRes){ waitRes(); return; }
+  for (const h of DOWN_HOOKS) if (h(e)) return;
+  if (SCENE === 'seat'){ if (e.target.closest('#chip')) return; seatTap(!!e.target.closest('#cat')); return; }
+  if (SCENE === 'top'){ if (e.target.closest('.body')) return; if (selected && !busy) deselect(); }
+});
+
+/* ================= 跳过 / 重来 / 横屏 ================= */
+el.skipBtn.onclick = e => { e.stopPropagation(); if (SCENE === 'intro') toHall(); };
+el.againBtn.onclick = e => { e.stopPropagation(); location.reload(); };
+el.muteBtn.onclick = e => { e.stopPropagation(); muted = !muted; if (master) master.gain.value = muted ? 0 : (window.USER_SFX_VOLUME ?? SFX_VOLUME); e.currentTarget.textContent = muted ? '声 · 关' : '声 · 开'; };
+el.rotBtn.onclick = async e => {
+  e.stopPropagation();
+  el.rotMask.style.opacity = 1; await new Promise(r => setTimeout(r, 360));
+  forceLand = !forceLand; layout();
+  // 真机支持时同时尝试系统级横屏锁定（失败则保持 CSS 旋转方案）
+  el.rotMask.style.opacity = 0;
+};
+// The opening starts only after the full resource gate succeeds.
+document.addEventListener('pointerdown', () => audioInit(), { once:true, capture:true });
+
+// 启动：先等开场必需素材，其余在后台陆续加载（由 pages.js 末尾调用）
+const ON_ASSET = {};   // key → 素材到位后的写入函数
+window.LOAD_STATE = { phase:'welcome', total:0, done:0, failed:[], entered:false, skipped:false };
+async function boot(){
+  buildDice(); layout(); requestAnimationFrame(frame);
+  const css = { curtain:'--img-curtain', seat:'--img-seat', cback:'--img-cback', cfront:'--img-cfront', die:'--img-die', cblank:'--img-cblank',
+                ck:'--img-ck', ca:'--img-ca', c2:'--img-c2', gunroom:'--img-gunroom', createbg:'--img-createbg' };
+  Object.entries(css).forEach(([k, v]) => ON_ASSET[k] = u => root.style.setProperty(v, `url("${u}")`));
+  Object.assign(ON_ASSET, { bg:u => el.bgImg.src = u, fg:u => el.fgImg.src = u, hand:u => el.beautyImg.src = u, pov:u => el.povImg.src = u, coin:u => el.coin.src = u,
+    cat:u => el.catImg.src = u, tnear:u => el.tableImg.src = u, ttop:u => el.topImg.src = u, gun:u => { $('#gunImg').src = u; $('#gunShImg').src = u; } });
+
+  for(const k of CRITICAL) if(ON_ASSET[k]) ON_ASSET[k](SRC[k][0]);
+  const loadedPortraits = new Set();
+  let launching = false, loading = false;
+  const enterOpening = skipped => {
+    const state = window.LOAD_STATE;if(state.entered)return;
+    state.entered=true;state.skipped=!!skipped;state.phase=skipped?'background':'entered';
+    el.loader.classList.add('hide');el.skipBtn.classList.remove('off');
+    window.MIRAGE_MEDIA?.updateLoad(state);runIntro();
+  };
+  document.getElementById('loadSkip').onclick=()=>enterOpening(true);
+  async function preloadEverything(){
+    if (loading || launching) return;
+    loading = true;
+    const state = window.LOAD_STATE;
+    state.phase = state.entered?'background':'loading'; state.failed = []; state.done = 0;
+    document.getElementById('loadRetry').hidden = true;
+    const scenes = CRITICAL;
+    const jobs = scenes.map(k => ({key:k, type:'scene'}));
+    state.total = jobs.length;
+    const update = detail => {
+      const pct = Math.floor(state.done/state.total*100);
+      document.getElementById('loadBar').style.width = pct+'%';
+      document.getElementById('loadPercent').innerHTML = pct+'<small>%</small>';
+      el.ldText.textContent = '已就绪 '+state.done+' / '+state.total;
+      document.getElementById('loadDetail').textContent = detail || '首屏素材正在归位';
+      window.MIRAGE_MEDIA?.updateLoad(state);
+    };
+    const decode = url => new Promise((resolve, reject) => {
+      const img = new Image(), timer = setTimeout(() => { img.onload = img.onerror = null; reject(new Error('image timeout')); }, 25000);
+      img.onload = async () => { try { if(img.decode) await img.decode(); clearTimeout(timer); resolve(); } catch(e){clearTimeout(timer);reject(e);} };
+      img.onerror = () => { clearTimeout(timer); reject(new Error('image unavailable')); };
+      img.src = url;
+    });
+    let next = 0;
+    const worker = async () => {
+      while(next < jobs.length){
+        const j = jobs[next++];
+        try {
+          if(j.type === 'scene'){
+            let url = U[j.key];
+            if (!url){ url = await tryLoad(SRC[j.key], 6000); if(!url) throw new Error('scene unavailable'); }
+            await decode(url); U[j.key] = url; ASSET_P[j.key] = Promise.resolve(url);
+            if(ON_ASSET[j.key]) ON_ASSET[j.key](url);
+            document.querySelectorAll('[data-src="'+j.key+'"]').forEach(img => img.src=url);
+          } else if(!loadedPortraits.has(j.key)){ await decode(j.url); loadedPortraits.add(j.key); }
+          state.done++; update(j.type === 'scene' ? '场景与物件 · '+j.key : '人物画卷 · '+j.key);
+        } catch(e){state.failed.push(j);update('部分素材仍在等待连接');}
+      }
+    };
+    await Promise.all(Array.from({length:2},worker));
+    update();
+    if(state.failed.length){
+      loading=false;state.phase=state.entered?'background-error':'error';el.ldText.textContent=state.failed.length+'项素材尚未就绪';
+      document.getElementById('loadDetail').textContent='保持在加载页，重试完成后再入场';
+      document.getElementById('loadRetry').hidden=false;window.MIRAGE_MEDIA?.updateLoad(state);return;
+    }
+    loading=false;launching=true;state.phase=state.entered?'complete':'ready';el.ldText.textContent='灯火已备';
+    document.getElementById('loadDetail').textContent='首屏已就绪 · 人物与地区图片按需载入';
+    window.MIRAGE_MEDIA?.updateLoad(state);
+    if(!state.entered){await new Promise(r=>setTimeout(r,650));enterOpening(false);}
+  }
+  document.getElementById('loadRetry').onclick=preloadEverything;
+  window.retryBackgroundLoad=preloadEverything;
+  window.MIRAGE_MEDIA.initWelcome(()=>{el.loader.classList.remove('prewelcome');preloadEverything();});
+
+}
+window.applyAsset = k => asset(k).then(u => { if (ON_ASSET[k]) ON_ASSET[k](u); document.querySelectorAll(`[data-src="${k}"]`).forEach(i => i.src = u); return u; });
+</script>
+<script src="asset-fallbacks.js"></script>
+<script src="catalog-data.js"></script>
+<script src="district-data.js"></script>
+<script src="game.js"></script>
+<script src="catalog.js"></script>
+<script src="district.js"></script>
+<script src="avatar-data.js"></script>
+<script src="media.js"></script>
+<script src="pages.js"></script>
+</body>
+</html>
