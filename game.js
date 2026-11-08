@@ -41,6 +41,18 @@ function ignoreAnimationCancel(error){ if (error?.name !== 'AbortError') throw e
 /* Return directly to the three-object table, without replaying video/loading. */
 const changeRuleBtn = $i('changeRuleBtn');
 FRAME_HOOKS.push(() => changeRuleBtn.classList.toggle('off', SCENE !== 'duel' || !G.mode));
+/* 手机：不依赖 preserve-3d / backface-visibility（部分手机浏览器会让翻开的牌消失），按翻转角度显式切换牌面。 */
+if (MOBILE) FRAME_HOOKS.push(() => {
+  dFelt.querySelectorAll('.pc').forEach(c => {
+    const inn = c.firstElementChild && c.querySelector('.pc-in'); if (!inn) return;
+    const m = getComputedStyle(inn).transform; let z = 1;
+    if (m && m !== 'none'){
+      const v = /^matrix3d\((.*)\)$/.exec(m), w = /^matrix\((.*)\)$/.exec(m);
+      if (v) z = +v[1].split(',')[10]; else if (w){ const a = w[1].split(',').map(Number); z = a[0]*a[3] - a[1]*a[2]; }
+    }
+    c.classList.toggle('up', z < 0);
+  });
+});
 changeRuleBtn.addEventListener('pointerdown', e => e.stopPropagation());
 changeRuleBtn.addEventListener('click', e => {
   e.stopPropagation();

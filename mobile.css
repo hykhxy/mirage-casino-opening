@@ -60,3 +60,14 @@ html.mobile.phone-portrait #musicDock button{width:34px;height:32px}
 html.mobile.phone-portrait #musicDock.settings-open{width:calc(100% - 24px)}
 html.mobile.phone-portrait .district-dialog{transform:none}
 html.mobile.phone-portrait #scWorld .wCh .wTxt{width:auto!important;max-width:none}
+/* Catalog zoom: the fixed top-right tools sat on top of the close button; keep close reachable and tap-anywhere. */
+html.mobile.atlas-zoom-open #tools,html.mobile.atlas-zoom-open #musicDock{visibility:hidden;pointer-events:none}
+html.mobile .atlas-zoom{cursor:pointer;-webkit-tap-highlight-color:transparent}
+html.mobile .atlas-zoom>button{top:auto;right:auto;left:50%;bottom:calc(22px + env(safe-area-inset-bottom,0px));transform:translateX(-50%);min-height:46px;min-width:128px;padding:12px 26px;font-size:15px;letter-spacing:.2em;z-index:60}
+html.mobile .atlas-zoom>img{max-height:80cqh}
+/* Phone cards: flat stacking + explicit face switching (see game.js hook) instead of preserve-3d/backface-visibility. */
+html.mobile .pc,html.mobile .pc-in{transform-style:flat;-webkit-transform-style:flat}
+html.mobile .pc-b,html.mobile .pc-f,html.mobile .pc .gl2{backface-visibility:visible;-webkit-backface-visibility:visible}
+html.mobile .pc-f{visibility:hidden}
+html.mobile .pc.up .pc-f{visibility:visible}
+html.mobile .pc.up .pc-b,html.mobile .pc.up .gl2{visibility:hidden}

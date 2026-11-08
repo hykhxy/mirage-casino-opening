@@ -31,7 +31,7 @@
    if(a==='next')return show(current+1);
    if(a==='pick')return show(list.findIndex(c=>c.id===b.dataset.id));
    if(a==='reset'){for(const id of ['atlasSearch','atlasRace','atlasStatus'])$('#'+id).value='';filter();}
-   if(a==='zoom'&&list[current]?.image){const z=$('.atlas-zoom');z.hidden=false;z.querySelector('img').src=list[current].image;z.querySelector('img').alt=list[current].name+'完整立绘';for(const c of sc.children)if(c!==z)c.inert=true;z.querySelector('button').focus();}
+   if(a==='zoom'&&list[current]?.image){const z=$('.atlas-zoom');z.hidden=false;z.dataset.atlas=window.MIRAGE_MOBILE?.enabled?'closeZoom':'';document.documentElement.classList.add('atlas-zoom-open');z.querySelector('img').src=list[current].image;z.querySelector('img').alt=list[current].name+'完整立绘';for(const c of sc.children)if(c!==z)c.inert=true;z.querySelector('button').focus();}
    if(a==='closeZoom')closeZoom();
   });
   $('#atlasSearch').addEventListener('input',filter);$('#atlasRace').addEventListener('change',filter);$('#atlasStatus').addEventListener('change',filter);
@@ -46,7 +46,7 @@
   for(const parent of [sc, $('.atlas-text')])parent.addEventListener('scroll',()=>{}, {passive:true});
   built=true;filter();
  }
- function closeZoom(restoreFocus=true){$('.atlas-zoom').hidden=true;for(const c of sc.children)c.inert=false;if(restoreFocus)$('.atlas-frame').focus();}
+ function closeZoom(restoreFocus=true){$('.atlas-zoom').hidden=true;document.documentElement.classList.remove('atlas-zoom-open');for(const c of sc.children)c.inert=false;if(restoreFocus)$('.atlas-frame').focus();}
  function filter(){
   const q=$('#atlasSearch').value.trim().toLowerCase(),race=$('#atlasRace').value,status=$('#atlasStatus').value;
   const old=list[current]?.id;
