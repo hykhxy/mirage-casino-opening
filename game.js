@@ -18,6 +18,7 @@ window.DUEL = G;
 const RUN_CANCELLED = Symbol('duel cancelled');
 let RUN = { active:true, waiters:new Set() };
 function cancelRun(){
+  if(MOBILE)delete duelCam.dataset.mobileAimOrigin;
   RUN.active = false;
   for (const cancel of [...RUN.waiters]) cancel();
   RUN.waiters.clear();
@@ -103,6 +104,7 @@ const vis = () => ({ L:Math.max(0, -DB.x/DB.w*100), R:Math.min(100, (W - DB.x)/D
 function vx(x){ const v = vis(); if (v.R - v.L > 88) return x; return v.L + 2 + x/100*(v.R - v.L - 22); }
 const fx = f => W/2 + (f - .5)*Math.min(DB.w, W*1.1);       // 横向：以屏幕中心为基准
 const fy = f => DB.y + DB.h*f;                                // 纵向：跟随桌面
+let mobileDuelSize=null;
 function duelLayout(){
   DB = cover(duelBox, 16/9, 1.0);
   duelBox.style.setProperty('--bh', DB.h + 'px'); dTalk.style.setProperty('--bh', DB.h + 'px');
@@ -115,6 +117,38 @@ function duelLayout(){
   dUi.style.setProperty('--pgw', Math.min(W*.62, H*1.05) + 'px');
   dUi.style.setProperty('--aimw', Math.min(W*.16, H*.2) + 'px');
   dUi.style.setProperty('--mz', Math.min(W*.22, H*.3) + 'px');
+  if (MOBILE) reflowMobileDuel();
+}
+function reflowMobileDuel(){
+  const old=mobileDuelSize; mobileDuelSize={w:W,h:H};
+  if(old && (old.w!==W || old.h!==H)){
+    for(const host of [dFelt,dUi])for(const e of host.querySelectorAll('*')){
+      if(e.style.left.endsWith('px'))e.style.left=parseFloat(e.style.left)*W/old.w+'px';
+      if(e.style.top.endsWith('px'))e.style.top=parseFloat(e.style.top)*H/old.h+'px';
+    }
+    if(G.sq){G.sq.hold=false;G.sq.dp=0;G.sq.r0=null;}
+  }
+  const g=window.MIRAGE_MOBILE.duelGeometry(W,H,DB);
+  dFelt.querySelectorAll('[data-hand]').forEach(e=>{
+    const [who,i]=e.dataset.hand.split('-'),mine=who==='me';
+    e.style.left=W/2+(+i?1:-1)*g.gap*(mine?1:.62)+'px';e.style.top=(mine?g.yMe:g.yHer)+'px';
+  });
+  const cup=$i('dCupW');
+  if(cup){
+    cup.style.left=g.cupX+'px';cup.style.top=g.cupY+'px';
+    dFelt.querySelectorAll('.dchip').forEach(e=>{e.style.left=g.cupX+(e.classList.contains('blk')?-1:1)*g.cupW*.95+'px';e.style.top=g.cupY-g.cupW*.25+'px';});
+    const plane=dFelt.querySelector('.dplane');if(plane){plane.style.left=g.cupX+'px';plane.style.top=g.cupY-g.cupW*.18+'px';}
+    if(old&&(old.w!==W||old.h!==H))cup._resetDrag?.();
+  }
+  dFelt.querySelectorAll('.tot').forEach(e=>{if(e._mobileAnchor){const p=e._mobileAnchor();e.style.left=p.x+'px';e.style.top=p.y+'px';e.style.setProperty('--fz',Math.max(14,CW*.26));}});
+  const aim=$i('gAim');if(aim){const p=rectL(dCat);aim.style.left=p.left+p.width*.36+'px';aim.style.top=p.top+p.height*.5+'px';}
+  if(duelCam.dataset.mobileAimOrigin){const p=rectL(dCat);duelCam.style.transformOrigin=`${p.left+p.width*.471}px ${p.top+p.height*.706}px`;}
+  if(!G.finale?.cards.length)return;
+  const w=g.finalW,gap=g.finalGap,y=g.finalY;
+  G.finale.cards.forEach((c,i)=>{
+    const x=W/2+(i-1)*gap;c.style.left=x+'px';c.style.top=y+(i===1?-w*.06:0)+'px';c.style.setProperty('--cw',w+'px');
+    c._lab.style.left=x+'px';c._lab.style.top=y+w*.95+'px';c._lab.style.setProperty('--lf',Math.max(10,w*.12)+'px');
+  });
 }
 LAYOUT_HOOKS.push(duelLayout);
 
@@ -409,6 +443,7 @@ async function cardRound(i, want){
   const yMe = Math.min(fy(.87), H - CW*.95), yHer = Math.min(fy(.745), yMe - CW*1.15), gap = CW*.68;
   const me = [mkCard(h.me[0], W/2 - gap, yMe, { rz:-5 }), mkCard(h.me[1], W/2 + gap, yMe, { rz:4 })];
   const her = [mkCard(h.her[0], W/2 - gap*.62, yHer, { rz:3, sc:.66, fy:1 }), mkCard(h.her[1], W/2 + gap*.62, yHer, { rz:-4, sc:.66, fy:1 })];
+  if(MOBILE){me.forEach((e,i)=>e.dataset.hand='me-'+i);her.forEach((e,i)=>e.dataset.hand='her-'+i);}
   [me[0], her[0], me[1], her[1]].forEach(c => c.style.opacity = 0);
   bump(.6);
   talk(pick([T('接好。', 64, 12, { size:3.2, rot:4 }), T('看清楚了——', 18, 16, { size:2.8, rot:-2 }), T('这一局……', 66, 10, { size:3, rot:3 })]));
@@ -420,12 +455,14 @@ async function cardRound(i, want){
   hint('再 掀 一 张');
   await guard(session, squeeze(me[1]));
   hint('');
-  const lMe = label(`你 · <b>${h.a}</b>`, W/2 - gap - CW*1.3, yMe + CW*.2);
+  const lMe = label(`你 · <b>${h.a}</b>`, MOBILE?parseFloat(me[0].style.left)-CW*1.3:W/2-gap-CW*1.3, (MOBILE?parseFloat(me[0].style.top):yMe)+CW*.2);
+  if(MOBILE)lMe._mobileAnchor=()=>({x:parseFloat(me[0].style.left)-CW*1.3,y:parseFloat(me[0].style.top)+CW*.2});
   await guard(session, sleep(500));
   talk(pick([T('该我了。', 66, 12, { size:3, rot:3 }), T('轮到我咯——', 18, 14, { size:2.8, rot:-3 })]));
   await guard(session, sleep(500));
   await guard(session, flipY(her[0])); await guard(session, sleep(240)); await guard(session, flipY(her[1]));
-  const lHer = label(`头头猫 · <b>${h.b}</b>`, W/2 - gap*.62 - CW*1.25, yHer + CW*.15, Math.max(14, CW*.2));
+  const lHer = label(`头头猫 · <b>${h.b}</b>`, MOBILE?parseFloat(her[0].style.left)-CW*1.25:W/2-gap*.62-CW*1.25, (MOBILE?parseFloat(her[0].style.top):yHer)+CW*.15, Math.max(14, CW*.2));
+  if(MOBILE)lHer._mobileAnchor=()=>({x:parseFloat(her[0].style.left)-CW*1.25,y:parseFloat(her[0].style.top)+CW*.15});
   await guard(session, sleep(700));
   const win = h.a > h.b;
   if (win) G.me++; else G.her++;
@@ -505,10 +542,12 @@ async function gunGame(){
   talk(T('别眨眼。', 70, 14, { size:3.2, rot:3 }), 1);
   const cr = rectL(dCat), mz = { x:cr.left + cr.width*.471, y:cr.top + cr.height*.706 };
   duelCam.style.transformOrigin = `${mz.x}px ${mz.y}px`;
+  if(MOBILE)duelCam.dataset.mobileAimOrigin='1';
   const push = anim(duelCam, [{ transform:'scale(1)' }, { transform:'scale(1.16)' }], { duration:3600, easing:'cubic-bezier(.3,0,.2,1)', fill:'forwards' });
   anim(dRed, [{ opacity:0 }, { opacity:.55 }, { opacity:.2 }, { opacity:.6 }, { opacity:.3 }], { duration:3600, fill:'forwards' });
   for (let j = 0; j < 4; j++){ sx.heart(); await guard(session, sleep(820 - j*90)); }
   await guard(session, push.finished);
+  if(MOBILE)delete duelCam.dataset.mobileAimOrigin;
   const fire = typeof window.__fire === 'boolean' ? window.__fire : Math.random() < n/6;   // __fire 仅供调试
   if (fire){
     const p = rectL(dCat), m2 = { x:p.left + p.width*.471, y:p.top + p.height*.706 };
@@ -536,7 +575,8 @@ async function gunGame(){
     await guard(session, finale(false));
   } else {
     sfx.click(); await guard(session, sleep(60)); sfx.click();
-    popText('咔哒。', mz.x, mz.y - H*.05, -6);
+    const currentMuzzle=MOBILE?(()=>{const p=rectL(dCat);return{x:p.left+p.width*.471,y:p.top+p.height*.706};})():mz;
+    popText('咔哒。', currentMuzzle.x, currentMuzzle.y - H*.05, -6);
     anim(dRed, [{ opacity:.6 }, { opacity:0 }], { duration:900, fill:'forwards' });
     await guard(session, sleep(900));
     anim(duelCam, [{ transform:'scale(1.16)' }, { transform:'scale(1)' }], { duration:900, easing:'cubic-bezier(.3,.7,.2,1)', fill:'forwards' }).finished.then(after(() => { duelCam.getAnimations().forEach(a => a.cancel()); }), ignoreAnimationCancel);
@@ -592,7 +632,7 @@ async function playerShoots(){
   bw.remove(); sx.load(); await guard(session, sleep(140)); sfx.ratchet(4, .25);
   anim(pg.querySelector('img'), [{ transform:'none' }, { transform:'rotate(-6deg) translate(1%,-2%)' }, { transform:'none' }], { duration:420, easing:'ease-out' });
   // 准星
-  const cr = rectL(dCat), tgt = { x:cr.left + cr.width*.36, y:cr.top + cr.height*.5 };   // 瞄她的肩头
+  const cr = rectL(dCat); let tgt = { x:cr.left + cr.width*.36, y:cr.top + cr.height*.5 };   // 瞄她的肩头
   const aim = mk('div'); aim.id = 'gAim'; aim.style.left = tgt.x + 'px'; aim.style.top = tgt.y + 'px'; aim.style.pointerEvents = 'auto'; dUi.appendChild(aim);
   anim(aim, [{ opacity:0, transform:'scale(2)' }, { opacity:1, transform:'scale(1)' }], { duration:500, fill:'forwards' });
   setPose('pout');
@@ -600,6 +640,7 @@ async function playerShoots(){
   hint('点 击 准 星 · 开 枪');
   await guard(session, new Promise(r => { aim.onclick = ev => { ev.stopPropagation(); r(); }; }));
   hint('');
+  if(MOBILE){const p=rectL(dCat);tgt={x:p.left+p.width*.36,y:p.top+p.height*.5};}
   aim.remove();
   const g2 = rectL(pg), m = { x:g2.left + g2.width*.29, y:g2.top + g2.height*.168 };
   muzzle(m.x, m.y, .9); sx.shot(.7);
@@ -655,15 +696,16 @@ async function diceRound(i, want){
   // 落盅
   setPose('sit');
   const cupW0 = parseFloat(getComputedStyle(dFelt).getPropertyValue('--cupw')) || 200;
-  const cx = W/2, cy = Math.min(fy(.86), H - cupW0*.42);
+  let cx = W/2, cy = Math.min(fy(.86), H - cupW0*.42), cupW;
+  const refreshCup=()=>{if(MOBILE){const g=window.MIRAGE_MOBILE.duelGeometry(W,H,DB);cx=g.cupX;cy=g.cupY;cupW=g.cupW;}};
   const cup = mk('div', '', `<div class="halo2"></div><img src="${U.cup || SRC.cup[0]}" alt="">`); cup.id = 'dCupW'; cup.style.left = cx + 'px'; cup.style.top = cy + 'px';
   dFelt.appendChild(cup);
   await guard(session, anim(cup, [{ opacity:0, transform:`translate(0,${fy(.5) - cy}px) scale(.5)` }, { opacity:1, transform:'translate(0,-6%) scale(1.02)', offset:.75 }, { opacity:1, transform:'none' }], { duration:650, easing:'cubic-bezier(.5,0,.6,1)', fill:'forwards' }).finished);
-  sx.slam(); burst(cx, cy, 16, 3, .2);
+  refreshCup(); sx.slam(); burst(cx, cy, 16, 3, .2);
   anim(duelCam, [{ transform:'translateY(0)' }, { transform:'translateY(.5%)' }, { transform:'translateY(0)' }], { duration:220 });
   talk(T('买定离手——\n大，还是小？', 70, 10, { v:1, size:2.8 }), 1);
   // 筹码
-  const cupW = parseFloat(getComputedStyle(dFelt).getPropertyValue('--cupw')) || 200;
+  cupW = parseFloat(getComputedStyle(dFelt).getPropertyValue('--cupw')) || 200;
   const mkChip = (t, s, x, cls) => { const c = mk('div', 'dchip ' + cls, `<b>${t}</b><small>${s}</small>`); c.style.left = x + 'px'; c.style.top = cy - cupW*.25 + 'px'; dFelt.appendChild(c);
     anim(c, [{ opacity:0, transform:'translateY(40%) scale(.6)' }, { opacity:1, transform:'none' }], { duration:500, easing:'cubic-bezier(.3,1.5,.5,1)' }); return c; };
   const cS = mkChip('小', '四 至 十', cx - cupW*.95, 'blk'), cB = mkChip('大', '十一至十七', cx + cupW*.95, '');
@@ -674,7 +716,8 @@ async function diceRound(i, want){
   mine.classList.add('pick'); other.classList.add('dim'); mine.onclick = other.onclick = null;
   talk(pick(guess === 'big' ? [T('押大？\n胆子不小。', 18, 12, { v:1, size:2.8 }), T('大……嗯哼。', 68, 14, { size:3, rot:3 })] : [T('押小？\n这么稳。', 18, 12, { v:1, size:2.8 }), T('小……真乖。', 68, 14, { size:3, rot:3 })]));
   const roll = rollFor(want ? guess === 'big' : guess !== 'big');
-  // 骰子（盅下）
+  // 骰子（盅下）：下注等待期间可能已经旋转，读取当前盅位。
+  refreshCup();
   const pl = mk('div', 'dplane'); pl.style.left = cx + 'px'; pl.style.top = cy - cupW*.18 + 'px'; pl.style.transform = 'rotateX(52deg)';
   const ds = parseFloat(getComputedStyle(dFelt).getPropertyValue('--ds')) || 50;
   const OFF = [[-ds*.75, -ds*.35, -14], [ds*.72, -ds*.45, 21], [ds*.05, ds*.6, -4]];
@@ -683,9 +726,9 @@ async function diceRound(i, want){
   buildDice();
   const dice = [...pl.querySelectorAll('.die')], shs = [...pl.querySelectorAll('.dsh')];
   dice.forEach((d, j) => { const [ox, oy, rz] = OFF[j], [ax, ay] = FACE[roll.d[j]];
-    d.style.left = `calc(var(--ds) * -.5 + ${ox}px)`; d.style.top = `calc(var(--ds) * -.5 + ${oy}px)`;
+    d.style.left = MOBILE?`calc(var(--ds) * ${-.5+ox/ds})`:`calc(var(--ds) * -.5 + ${ox}px)`; d.style.top = MOBILE?`calc(var(--ds) * ${-.5+oy/ds})`:`calc(var(--ds) * -.5 + ${oy}px)`;
     d._fin = `translateZ(calc(var(--ds) * .5)) rotateZ(${rz}deg) rotateX(${ax}deg) rotateY(${ay}deg)`; d.style.transform = d._fin;
-    shs[j].style.left = ox + 'px'; shs[j].style.top = oy + 'px'; shs[j].style.position = 'absolute'; });
+    shs[j].style.left = MOBILE?`calc(var(--ds) * ${ox/ds})`:ox+'px'; shs[j].style.top = MOBILE?`calc(var(--ds) * ${oy/ds})`:oy+'px'; shs[j].style.position = 'absolute'; });
   // 掀盅
   await guard(session, sleep(600));
   cup.classList.add('act');
@@ -697,8 +740,10 @@ async function diceRound(i, want){
   cup.setAttribute('aria-label', '开盅查看点数');
   await guard(session, new Promise(res => {
     let y0 = null, dy = 0, done = false, holding = false;
+    if(MOBILE)cup._resetDrag=()=>{if(done)return;holding=false;y0=null;dy=0;cup.style.transform='none';pl.style.opacity='0';};
     const lift = () => {
       if (done) return; done = true;
+      if(MOBILE)delete cup._resetDrag;
       cup.classList.remove('act'); cup.tabIndex = -1;
       cup.onpointerdown = cup.onpointermove = cup.onpointerup = cup.onpointercancel = cup.onkeydown = cup.onclick = null;
       res();
@@ -711,7 +756,7 @@ async function diceRound(i, want){
     };
     cup.onpointermove = ev => {
       if (y0 == null || done) return;
-      dy = Math.max(0, y0 - toLocal(ev.clientX, ev.clientY).y);
+      refreshCup();dy = Math.max(0, y0 - toLocal(ev.clientX, ev.clientY).y);
       cup.style.transform = `translateY(${-dy}px) rotate(${-dy*.03}deg)`;
       pl.style.opacity = Math.min(1, dy/(cupW*.3));
       if (dy > cupW*.45) lift();
@@ -730,8 +775,10 @@ async function diceRound(i, want){
   sfx.ting();
   const pr = rectL(pl); burst(pr.left, pr.top, 20, 3);
   await guard(session, sleep(600));
+  refreshCup();
   const big = roll.s >= 11, win = want ? true : false;
   const lab = label(`${roll.d.join(' · ')}　<b>${roll.s}</b> 点 · ${big ? '大' : '小'}`, cx, cy - cupW*.95, Math.max(18, CW*.3));
+  if(MOBILE)lab._mobileAnchor=()=>{const g=window.MIRAGE_MOBILE.duelGeometry(W,H,DB);return{x:g.cupX,y:g.cupY-g.cupW*.95};};
   await guard(session, sleep(900));
   if (win) G.me++; else G.her++;
   markRound(i, win); stamp(win);
@@ -776,7 +823,8 @@ async function finale(won){
   }
   await guard(session, sleep(900));
   bump(1);
-  const w = CW*1.3, gap = Math.min(w*1.55, W*.3), y = Math.min(fy(.8), H - w*1.45), from = { x:W/2, y:fy(.48) };
+  const fg=MOBILE?window.MIRAGE_MOBILE.duelGeometry(W,H,DB):null;
+  const w = fg?fg.finalW:CW*1.3, gap = fg?fg.finalGap:Math.min(w*1.55,W*.3), y = fg?fg.finalY:Math.min(fy(.8),H-w*1.45), from = { x:W/2, y:fy(.48) };
   const cards = FIN.map((f, i) => {
     const c = mkCard({ img:f.img }, W/2 + (i - 1)*gap, y + (i === 1 ? -w*.06 : 0), { fy:1, tilt:30, rz:(i - 1)*7, w, cls:'rc' });
     c.style.opacity = 0;
@@ -792,6 +840,7 @@ async function finale(won){
     c.onpointerenter = () => { if (!G.finale.busy) sfx.pop(); };
   });
   G.finale.cards = cards;
+  if(MOBILE)reflowMobileDuel();
   talk(T('翻开一张吧。', 66, 14, { size:3, rot:3 }));
   setTimeout(after(() => talk(T('红桃Ｋ是你，\n红桃Ａ是这座城。', 12, 16, { size:2.5, rot:-2 }))), 1300);
   hint('');

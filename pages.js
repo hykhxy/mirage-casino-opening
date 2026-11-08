@@ -120,6 +120,7 @@ function buildCreate(){
   sc.querySelectorAll('.inp').forEach(i => i.addEventListener('pointerdown', e => e.stopPropagation()));
   // 镜面随鼠标微倾
   sc.addEventListener('pointermove', e => {
+    if(MOBILE)return;
     const p = toLocal(e.clientX, e.clientY), dx = p.x/W - .5, dy = p.y/H - .5;
     sc.querySelector('.mirror').style.transform = `rotateY(${dx*10}deg) rotateX(${-dy*8}deg)`;
     $i('crPanel').style.transform = `rotateY(${dx*-3}deg) rotateX(${dy*2}deg)`;
@@ -384,7 +385,7 @@ async function leave(){
 window.leavePage = leave;
 /* 页面视差 */
 FRAME_HOOKS.push(() => {
-  if (SCENE !== 'page' || !CUR) return;
+  if (SCENE !== 'page' || !CUR || MOBILE) return;
   if (CUR === 'create'){ const b = $i('scCreate').querySelector('.pgBg'); if (b && !b.getAnimations().some(a => a.effect && a.effect.getKeyframes().some(k => k.filter))) b.style.translate = `${-mx*18}px ${-my*10}px`; }
   else if (CUR === 'world'){
     const s = $i('scWorld').querySelector('.wCh.on'); if (!s) return;
@@ -400,5 +401,6 @@ DOWN_HOOKS.unshift(e => SCENE === 'page');
 /* 输入框获得焦点时浏览器会偷偷滚动 overflow:hidden 的舞台，导致整页错位 → 锁死 */
 [app, ...document.querySelectorAll('.scene')].forEach(s => s.addEventListener('scroll', () => { if (s.scrollTop || s.scrollLeft){ s.scrollTop = 0; s.scrollLeft = 0; } }));
 
+window.MIRAGE_MOBILE.mount();
 boot();
 })();

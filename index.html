@@ -4,7 +4,8 @@
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover,user-scalable=no">
 <title>开端</title>
-<script src="delivery.js"></script>
+<script src="delivery.js?v=5"></script>
+<script src="mobile.js?v=5"></script>
 <link rel="stylesheet" href="game.css">
 
 <style>
@@ -272,6 +273,7 @@ img{-webkit-user-drag:none;user-select:none}
 <link rel="stylesheet" href="loading.css">
 <link rel="stylesheet" href="district.css">
 <link rel="stylesheet" href="media.css">
+<link rel="stylesheet" href="mobile.css?v=5">
 </head>
 <body>
 <div id="app">
@@ -503,6 +505,7 @@ Object.assign(SRC, {
   race9:  K3('Pu8mVbUBpPa5yBDc9e772OgSpVrX2EUp', 'ntj1Pxs'),
 });
 const lowPower = window.MIRAGE_CDN.lowPower;
+const MOBILE = window.MIRAGE_MOBILE.enabled;
 const CRITICAL = ['bg', 'fg', 'curtain', 'hand', 'coin', 'pov'];
 const U = {}, ASSET_P = {};
 // 按需加载：asset(key) → Promise<可用外链>
@@ -535,6 +538,7 @@ const lerp = (a, b, t) => a + (b - a) * t;
 const clamp01 = t => Math.max(0, Math.min(1, t));
 const ease = { inOut: t => t < .5 ? 4*t*t*t : 1 - Math.pow(-2*t + 2, 3) / 2, out: t => 1 - Math.pow(1 - t, 3), in: t => t*t*t, outQ: t => 1 - (1 - t)*(1 - t), sine: t => .5 - .5*Math.cos(Math.PI*t) };
 const anim = (e, kf, opt) => {
+  if (MOBILE) ({kf,opt} = window.MIRAGE_MOBILE.animation(kf,opt));
   if (e.id !== 'blink') return e.animate(kf, Object.assign({ fill:'forwards' }, opt));
   const before = getComputedStyle(e).opacity;
   e.getAnimations().forEach(a => a.cancel());
@@ -562,13 +566,21 @@ function cover(box, aspect, over = 1, ay = .5){
   Object.assign(box.style, { width:bw + 'px', height:bh + 'px', left:(W - bw)/2 + 'px', top:(H - bh)*ay + 'px' });
   return { w:bw, h:bh, x:(W - bw)/2, y:(H - bh)*ay };
 }
-let WB, SB, TB;
+let WB, SB, TB, mobileView;
 function layout(){
   SW = innerWidth; SH = innerHeight;
   ROT = forceLand && SH > SW;
-  W = ROT ? SH : SW; H = ROT ? SW : SH;
+  if (MOBILE){
+    mobileView = window.MIRAGE_MOBILE.viewport(SW,SH,forceLand);
+    W=mobileView.w; H=mobileView.h; ROT=mobileView.rot;
+    app.style.transform=mobileView.transform;
+    root.classList.toggle('phone-portrait',W<H);
+    root.style.setProperty('--mobile-scale',mobileView.scale);
+  } else {
+    W = ROT ? SH : SW; H = ROT ? SW : SH;
+    app.style.transform = ROT ? `translate(${SW}px,0) rotate(90deg)` : 'none';
+  }
   app.style.width = W + 'px'; app.style.height = H + 'px';
-  app.style.transform = ROT ? `translate(${SW}px,0) rotate(90deg)` : 'none';
   el.rotBtn.classList.toggle('off', !(isPortrait() || ROT));
   el.rotBtn.textContent = ROT ? '竖 屏' : '横 屏';
   el.rotBtn.classList.toggle('hl', isPortrait() && !ROT);
@@ -588,8 +600,8 @@ function layout(){
 }
 addEventListener('resize', layout);
 // 屏幕坐标 → 舞台本地坐标
-function toLocal(cx, cy){ return ROT ? { x:cy, y:SW - cx } : { x:cx, y:cy }; }
-function rectL(e){ const r = e.getBoundingClientRect(); return ROT ? { left:r.top, top:SW - r.right, width:r.height, height:r.width } : { left:r.left, top:r.top, width:r.width, height:r.height }; }
+function toLocal(cx, cy){ if (MOBILE) return window.MIRAGE_MOBILE.local(cx,cy,mobileView); return ROT ? { x:cy, y:SW - cx } : { x:cx, y:cy }; }
+function rectL(e){ const r = e.getBoundingClientRect(); if (MOBILE) return window.MIRAGE_MOBILE.rect(r,mobileView); return ROT ? { left:r.top, top:SW - r.right, width:r.height, height:r.width } : { left:r.left, top:r.top, width:r.width, height:r.height }; }
 
 /* ================= 声音（实时合成） ================= */
 const SFX_VOLUME = .12;
@@ -645,11 +657,13 @@ const sprite = (() => { const c = document.createElement('canvas'); c.width = c.
   g.fillStyle = r; g.fillRect(0, 0, 64, 64); return c; })();
 const motes = [], sparks = [];
 function resizeDust(){
-  DPR = Math.min(devicePixelRatio || 1, lowPower ? 1.25 : 2); cv.width = W*DPR; cv.height = H*DPR; cv.style.width = W + 'px'; cv.style.height = H + 'px'; cx.setTransform(DPR, 0, 0, DPR, 0, 0);
+  DPR = Math.min(devicePixelRatio || 1, lowPower ? 1.25 : 2)*(MOBILE?Math.min(1,mobileView?.scale||1):1); cv.width = W*DPR; cv.height = H*DPR; cv.style.width = W + 'px'; cv.style.height = H + 'px'; cx.setTransform(DPR, 0, 0, DPR, 0, 0);
   if (!motes.length) for (let i = 0; i < (lowPower ? 42 : 140); i++){ const z = .15 + Math.random()*.85; motes.push({ x:Math.random()*W, y:Math.random()*H, z, ph:Math.random()*6.28, vx:(Math.random() - .5)*.12, vy:-(.06 + z*.28) }); }
 }
 function burst(x, y, n, spd = 5, up = 1.2){ for (let i = 0; i < n; i++){ const a = Math.random()*6.28, v = (.3 + Math.random())*spd; sparks.push({ x, y, vx:Math.cos(a)*v, vy:Math.sin(a)*v - up, life:1, r:2 + Math.random()*5, d:.008 + Math.random()*.014 }); } }
+let lastMobileDust=0;
 function drawDust(now, dt){
+  if(MOBILE){if(now-lastMobileDust<50)return;dt=Math.min(100,now-lastMobileDust);lastMobileDust=now;}
   if(lowPower && window.LOAD_STATE?.phase==='welcome')return;
   cx.clearRect(0, 0, W, H); cx.globalCompositeOperation = 'lighter'; const k = dt/16.7;
   for (const p of motes){
@@ -711,11 +725,14 @@ function setCam(z){ setCamRaw(z, W/2*(1 - z), H/2*(1 - z)); }
 /* ================= 主循环 ================= */
 const FRAME_HOOKS = [], LAYOUT_HOOKS = [], DOWN_HOOKS = [];
 let lastT = performance.now();
+if(MOBILE) document.addEventListener('visibilitychange',()=>{lastT=performance.now();});
 function frame(now){
-  if(document.hidden || (lowPower && now-lastT<32)){requestAnimationFrame(frame);return;}
-  const dt = Math.min(50, now - lastT); lastT = now;
+  if(document.hidden){if(MOBILE)lastT=now;requestAnimationFrame(frame);return;}
+  if(!MOBILE && lowPower && now-lastT<32){requestAnimationFrame(frame);return;}
+  const elapsed=now-lastT;
+  const dt = Math.min(50, elapsed); lastT = now;
   if (FREEZE){ requestAnimationFrame(frame); return; }
-  CLOCK += dt; now = CLOCK;
+  CLOCK += MOBILE ? Math.min(1000,elapsed) : dt; now = CLOCK;
   if (performance.now() - lastMove > 2500){ tmx = Math.sin(now/5200)*.35; tmy = Math.sin(now/7100)*.2; }
   const k = parallaxOn ? 1 : 0;
   mx += (tmx*k - mx)*.05; my += (tmy*k - my)*.05;
@@ -1321,14 +1338,14 @@ async function boot(){
 }
 window.applyAsset = k => asset(k).then(u => { if (ON_ASSET[k]) ON_ASSET[k](u); document.querySelectorAll(`[data-src="${k}"]`).forEach(i => i.src = u); return u; });
 </script>
-<script src="asset-fallbacks.js"></script>
-<script src="catalog-data.js"></script>
-<script src="district-data.js"></script>
-<script src="game.js"></script>
-<script src="catalog.js"></script>
-<script src="district.js"></script>
-<script src="avatar-data.js"></script>
-<script src="media.js"></script>
-<script src="pages.js"></script>
+<script src="asset-fallbacks.js?v=5"></script>
+<script src="catalog-data.js?v=5"></script>
+<script src="district-data.js?v=5"></script>
+<script src="game.js?v=5"></script>
+<script src="catalog.js?v=5"></script>
+<script src="district.js?v=5"></script>
+<script src="avatar-data.js?v=5"></script>
+<script src="media.js?v=5"></script>
+<script src="pages.js?v=5"></script>
 </body>
 </html>
