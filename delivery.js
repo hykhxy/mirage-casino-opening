@@ -33,8 +33,9 @@
  function url(path){return urls(path)[0]||path;}
  function remember(path,value){cache.set(pathOf(path)||path,value);}
  function bindImage(img,path){
-  path=pathOf(path);if(!path)return;
-  const old=images.get(img);if(old?.path===path&&old.current===img.getAttribute('src'))return;
+  const old=images.get(img);path=pathOf(path);
+  if(!path){if(old)img.removeEventListener('error',old.fail);images.delete(img);return;}
+  if(old?.path===path&&old.current===img.getAttribute('src'))return;
   if(old)img.removeEventListener('error',old.fail);
   const state={path,list:urls(path),index:0,current:'',fail:null};
   state.fail=()=>{if(images.get(img)!==state)return;failures.push({kind:'image',path,url:state.current});if(++state.index<state.list.length)load();else img.dataset.deliveryError='true';};
