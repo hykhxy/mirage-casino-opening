@@ -1,7 +1,7 @@
 /* Public multi-CDN delivery. No credentials, data URLs, or private/local media. */
 (() => {
  'use strict';
- const repo='hykhxy/mirage-casino-opening',version='v5';
+ const repo='hykhxy/mirage-casino-opening',version='v6';
  const base='https://hykhxy.github.io/mirage-casino-opening/';
  const providers={pages:base,gcore:`https://gcore.jsdelivr.net/gh/${repo}@${version}/`,jsdelivr:`https://cdn.jsdelivr.net/gh/${repo}@${version}/`,fastly:`https://fastly.jsdelivr.net/gh/${repo}@${version}/`};
  let preferred=new URLSearchParams(location.search).get('line')||'auto';

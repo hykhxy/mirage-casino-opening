@@ -22,18 +22,30 @@ const RACES = [
   { n:'夜鸮族', d:'昼伏夜出、过目不忘。掌控着天眼监控中心与精算数据库。' },
   { n:'龙角裔', d:'数量最为稀少，头顶晶莹龙角——九大博彩财团核心家族的掌权者与神秘继承人。' },
 ];
+/* 天赋：数值、触发条件、代价都写死在这里；创造角色时会原样写进设定文本，聊天里的状态栏与正文必须照此执行 */
 const TALENTS = [
-  { k:'听', n:'听骰辨位', d:'凭盅内回响分辨落点；场子一吵就失灵' },
-  { k:'千', n:'千手', d:'洗、切、发、换一气呵成；天眼之下不敢妄动' },
-  { k:'记', n:'过目记牌', d:'记得住整副牌序——可惜连续洗牌机专克你' },
-  { k:'读', n:'读心微表情', d:'看穿对手的犹豫与虚张声势，代价是偏头痛' },
-  { k:'算', n:'精算直觉', d:'对赔率与庄家优势一清二楚，不被情绪裹挟' },
-  { k:'止', n:'见好就收', d:'能在最高点起身离桌——这座城里最稀有的天赋' },
-  { k:'运', n:'回光鸿运', d:'绝境时有小概率逆转，但它从不可靠' },
-  { k:'盲', n:'天眼盲区', d:'熟知监控死角与夜鸮交班的那三十秒' },
-  { k:'脉', n:'叠码人脉', d:'认识半个贵宾厅的厅主与叠码仔，也欠着他们人情' },
-  { k:'嗅', n:'赌徒嗅觉', d:'嗅得出谁快要输红眼，也嗅得出陷阱' },
+  { k:'听', n:'听骰辨位', t:'B阶', d:'凭盅内回响分辨落点；场子一吵就失灵', e:'骰类赌局的点数判断成功率 +15%', g:'骰盅、骰宝等骰类赌局，且环境不嘈杂', c:'人声鼎沸的大厅里失效，判断成功率 −10%' },
+  { k:'千', n:'千手', t:'A阶', d:'洗、切、发、换一气呵成；天眼之下不敢妄动', e:'出千基础成功率 +12；千术熟练度起点 +10', g:'主角亲自决定出千时', c:'处于天眼监控覆盖区时，被发现概率 +8' },
+  { k:'记', n:'过目记牌', t:'B阶', d:'记得住整副牌序——可惜连续洗牌机专克你', e:'牌靴类赌局推算剩余牌的判定 +18%', g:'百家乐、二十一点等使用牌靴的牌局', c:'遇到连续洗牌机（CSM）完全失效' },
+  { k:'读', n:'读心微表情', t:'B阶', d:'看穿对手的犹豫与虚张声势，代价是偏头痛', e:'识破虚张声势与谎言的判定 +15%；每次对话可多获得一条观察', g:'与人面对面交谈或对赌时', c:'每触发 3 次，精神 −2（偏头痛）' },
+  { k:'算', n:'精算直觉', t:'B阶', d:'对赔率与庄家优势一清二楚，不被情绪裹挟', e:'赔率与期望值估算误差 ≤2%；抵抗“上头”的判定 +10%', g:'需要计算赔率、决定下注额时', c:'情绪类交涉中魅力判定 −5%' },
+  { k:'止', n:'见好就收', t:'A阶', d:'能在最高点起身离桌——这座城里最稀有的天赋', e:'每轮可主动离桌；离桌时赌瘾值 −5，并免疫一次“再来一把”冲动判定', g:'手握盈利，或情绪即将失控前', c:'离桌后同一赌局当晚不可再入座' },
+  { k:'运', n:'回光鸿运', t:'C阶', d:'绝境时有小概率逆转，但它从不可靠', e:'资金低于初始本金 20% 时，单次关键判定成功率 +15%（每日 1 次）', g:'资金濒临归零', c:'资金充足时没有任何加成' },
+  { k:'盲', n:'天眼盲区', t:'B阶', d:'熟知监控死角与夜鸮交班的那三十秒', e:'所在区域监控强度 −20；夜鸮交班的 30 秒窗口内再 −35', g:'出千、潜行或进入监控区时', c:'进入新区域后需先观察 1 轮才能找到死角' },
+  { k:'脉', n:'叠码人脉', t:'B阶', d:'认识半个贵宾厅的厅主与叠码仔，也欠着他们人情', e:'可向叠码仔或厅主借筹码，额度 +¥50,000；借码利率 −2%', g:'资金不足、需要借码时', c:'每次借码人情债 +1，满 3 个会被索要回报' },
+  { k:'嗅', n:'赌徒嗅觉', t:'C阶', d:'嗅得出谁快要输红眼，也嗅得出陷阱', e:'察觉他人输红眼、陷阱或老千的判定 +12%', g:'观察赌桌上的其他人时', c:'误判时过度警觉，精神 −1' },
 ];
+/* 六维属性：与聊天状态栏的“六维属性”一一对应；判定修正 = (属性值 − 50) × 0.5 个百分点 */
+const ATTRS = [
+  { n:'体力', d:'熬夜、逃跑、肢体对抗' },
+  { n:'精神', d:'抗诱惑、抗上头、承压' },
+  { n:'魅力', d:'交涉、好感增长速度' },
+  { n:'智力', d:'记牌、算赔率、识破谎言' },
+  { n:'胆识', d:'下注魄力、威压下不慌、出千手稳' },
+  { n:'运气', d:'随机事件与小概率结果' },
+];
+const ATTR_BUDGET = 360, ATTR_MIN = 30, ATTR_MAX = 90, ATTR_DEF = 50;
+const DEFAULT_AVATAR = 'avatar-6';
 const JOBS = ['荷官', '职业牌手', '叠码仔', '贵宾厅公关', '天眼监控员', '精算师', '调查记者', '戒赌社工', '财阀继承人', '初来乍到的游客'];
 const GENDERS = ['女', '男', '其他'];
 
@@ -41,8 +53,20 @@ const GENDERS = ['女', '男', '其他'];
    创造角色
    ===================================================================== */
 const KEY = 'ttm-character-v1';
-const ST = { name:'', gender:'', genderX:'', age:'', job:'', race:-1, look:'', bg:'', talents:[], portrait:null };
-function loadST(){ try { const s = JSON.parse(localStorage.getItem(KEY) || 'null'); if (s) Object.assign(ST, s); } catch (_){} }
+const ST = { name:'', gender:'', genderX:'', age:'', job:'', race:-1, look:'', bg:'', talents:[], portrait:null, attrs:ATTRS.map(() => ATTR_DEF) };
+function loadST(){
+  try { const s = JSON.parse(localStorage.getItem(KEY) || 'null'); if (s) Object.assign(ST, s); } catch (_){}
+  if (!Array.isArray(ST.attrs) || ST.attrs.length !== ATTRS.length || ST.attrs.some(v => !(v >= ATTR_MIN && v <= ATTR_MAX)) || ST.attrs.reduce((a, b) => a + b, 0) > ATTR_BUDGET) ST.attrs = ATTRS.map(() => ATTR_DEF);
+}
+const attrSpent = () => ST.attrs.reduce((a, b) => a + b, 0);
+/* 头像码：预设头像 = avatar-1…6；外链 = 链接本身；本地图片 = 上传后得到的公网外链。聊天卡每一轮都会按这个码显示头像与立绘 */
+function portraitCode(){
+  const p = ST.portrait; if (!p) return DEFAULT_AVATAR;
+  if (p.code) return p.code;
+  if (p.type === 'url') return p.src;
+  if (p.type === 'local' && p.remote) return p.remote;
+  return null;
+}
 function buildCreate(){
   const sc = $i('scCreate');
   sc.innerHTML = `
@@ -59,9 +83,11 @@ function buildCreate(){
         <button class="pgBtn" data-act="local">本地上传</button>
         <button class="pgBtn" data-act="url">外链图片</button>
         <button class="pgBtn" data-act="clearP" title="移除立绘">移除</button>
+        <button class="pgBtn main" data-act="upload" id="upBtn" hidden title="把本地图片上传到公共图床，换成聊天里能用的公网外链">生成公网外链</button>
         <input type="file" id="pFile" accept="image/*" hidden>
       </div>
       <div class="urlRow cin" id="urlRow" data-d="2"><input class="inp" id="pUrl" placeholder="https://… 图片外链"><button class="pgBtn" data-act="loadUrl">载入</button></div>
+      <div class="pStat cin" id="pStat" data-d="2"></div>
       <section class="avatarPicker cin" data-d="3"><div class="avatarHead"><b>选一张席间肖像</b><small>点击即用作头像</small></div><div class="avatarChoices">${(window.AVATAR_DATA||[]).map((a,i)=>`<button type="button" class="avatarChoice" data-avatar="${i}" aria-label="选择${esc(a.name)}头像" title="${esc(a.name)} · ${esc(a.source)}"><img loading="lazy" src="${esc(a.url)}" alt="${esc(a.name)}"><span>${esc(a.name)}</span></button>`).join('')}</div></section>
       <div class="whisper cin" data-d="3">「镜子不会骗人，小客人。」<br><span style="font-size:.7em;opacity:.7;letter-spacing:.4em">—— 头 头 猫</span></div>
     </div>
@@ -78,7 +104,10 @@ function buildCreate(){
           <div class="races" id="fRace">${RACES.map((r, i) => `<div class="race" data-i="${i}"><img data-src="race${i}" alt=""><b>${r.n}</b></div>`).join('')}</div>
           <div class="raceDesc" id="raceDesc">挑一个种族——人族，或九大兽耳娘亚种。</div></div>
         <div class="fd full cin" data-d="4"><label>赌运天赋<em id="talCnt">最多选 2 项</em></label>
-          <div class="talents" id="fTal">${TALENTS.map((t, i) => `<div class="tal" data-i="${i}"><i><span>${t.k}</span></i><b>${t.n}</b><small>${t.d}</small></div>`).join('')}</div></div>
+          <div class="talents" id="fTal">${TALENTS.map((t, i) => `<div class="tal" data-i="${i}"><i><span>${t.k}</span></i><b>${t.n}<em class="tier">${t.t}</em></b><small>${t.d}</small><small class="tt">${t.e}</small></div>`).join('')}</div></div>
+        <div class="fd full cin" data-d="4"><label>六维属性<em id="atrCnt"></em></label>
+          <div class="atrs" id="fAtr">${ATTRS.map((a, i) => `<div class="atr" data-i="${i}"><b>${a.n}</b><button type="button" class="atrB" data-s="-1" aria-label="${a.n}减一">−</button><div class="atrBar"><i></i></div><button type="button" class="atrB" data-s="1" aria-label="${a.n}加一">＋</button><output></output><small>${a.d}</small></div>`).join('')}</div>
+          <div class="raceDesc">总点数 ${ATTR_BUDGET}，每项 ${ATTR_MIN}–${ATTR_MAX}。属性会写进聊天状态栏，并直接影响判定：修正 = (属性值 − 50) × 0.5%。</div></div>
         <div class="fd full cin" data-d="5"><label>身材样貌</label><textarea class="inp" id="fLook" maxlength="600" placeholder="身高、身形、发色瞳色、耳尾特征、惯穿的衣服……"></textarea></div>
         <div class="fd full cin" data-d="6"><label>身份背景</label><textarea class="inp" id="fBg" maxlength="1200" placeholder="你为何来到新濠蜃楼城？欠着谁、等着谁、想赢回什么？"></textarea></div>
       </div>
@@ -90,13 +119,14 @@ function buildCreate(){
   <div class="modal" id="crModal"><div class="mBox">
     <div class="mHead"><h3>角色设定</h3><div class="seal2">定</div></div>
     <div class="mBody" id="mBody"></div>
-    <div class="mFoot"><button class="pgBtn" data-act="closeM">再改改</button><button class="pgBtn main" data-act="copy">一 键 复 制</button></div>
+    <div class="mFoot"><button class="pgBtn" data-act="closeM">再改改</button><button class="pgBtn" data-act="upload" id="mUp" hidden>生成公网外链</button><button class="pgBtn main" data-act="copy">一 键 复 制</button></div>
   </div></div>`;
   // 种族图
   sc.querySelectorAll('img[data-src]').forEach(i => { const k = i.dataset.src; if (U[k]) i.src = U[k]; else applyAsset(k); });
   // 事件
   sc.addEventListener('click', e => {
-    const avatar=e.target.closest('[data-avatar]');if(avatar){const a=window.AVATAR_DATA[+avatar.dataset.avatar];ST.portrait={type:'url',src:a.url,name:a.name};syncUI();dirty();mirrorFlash();toast('头像已选：'+a.name);return;}
+    const avatar=e.target.closest('[data-avatar]');if(avatar){const a=window.AVATAR_DATA[+avatar.dataset.avatar];ST.portrait={type:'url',src:a.url,name:a.name,code:a.id};syncUI();dirty();mirrorFlash();toast('头像已选：'+a.name);return;}
+    const ab = e.target.closest('.atrB'); if (ab){ if (e.detail === 0) stepAttr(+ab.closest('.atr').dataset.i, +ab.dataset.s); return; }
     const a = e.target.closest('[data-act]'); if (a) return act(a.dataset.act);
     const g = e.target.closest('#fGender .chip'); if (g){ ST.gender = g.dataset.v; syncUI(); sfx.pop(); return; }
     const j = e.target.closest('#fJobs .chip'); if (j){ ST.job = j.dataset.v; $i('fJob').value = ST.job; syncUI(); sfx.pop(); return; }
@@ -118,6 +148,18 @@ function buildCreate(){
   mir.addEventListener('drop', e => { const f = e.dataTransfer.files[0]; if (f && f.type.startsWith('image/')) readLocal(f); });
   // 输入框内允许正常输入（全局禁用了选择）
   sc.querySelectorAll('.inp').forEach(i => i.addEventListener('pointerdown', e => e.stopPropagation()));
+  // 属性 ± 按钮：按住连续加减（键盘回车走 click 分支）
+  let atrTimer = 0, atrRepeat = 0;
+  const atrStop = () => { clearTimeout(atrTimer); clearInterval(atrRepeat); atrTimer = atrRepeat = 0; };
+  sc.querySelectorAll('.atrB').forEach(b => {
+    b.addEventListener('pointerdown', e => {
+      e.stopPropagation(); e.preventDefault(); atrStop();
+      const i = +b.closest('.atr').dataset.i, s = +b.dataset.s;
+      if (!stepAttr(i, s)) return;
+      atrTimer = setTimeout(() => { atrRepeat = setInterval(() => { if (!stepAttr(i, s)) atrStop(); }, 70); }, 380);
+    });
+    ['pointerup', 'pointerleave', 'pointercancel'].forEach(t => b.addEventListener(t, atrStop));
+  });
   // 镜面随鼠标微倾
   sc.addEventListener('pointermove', e => {
     if(MOBILE)return;
@@ -142,7 +184,58 @@ function syncUI(){
   document.querySelectorAll('.avatarChoice').forEach(c=>c.classList.toggle('selected',ST.portrait?.src===window.AVATAR_DATA?.[+c.dataset.avatar]?.url));
   const img = $i('pImg'), ph = $i('pPh');
   if (ST.portrait){ img.src = ST.portrait.src; img.classList.add('on'); ph.style.opacity = 0; } else { img.classList.remove('on'); img.removeAttribute('src'); ph.style.opacity = 1; }
+  syncAttrs(); syncPortraitStat();
   dirty();
+}
+function stepAttr(i, s){
+  const v = ST.attrs[i] + s;
+  if (v < ATTR_MIN || v > ATTR_MAX) return false;
+  if (s > 0 && attrSpent() >= ATTR_BUDGET) return false;
+  ST.attrs[i] = v; syncAttrs(); dirty(); return true;
+}
+function syncAttrs(){
+  const left = ATTR_BUDGET - attrSpent();
+  document.querySelectorAll('#fAtr .atr').forEach(r => {
+    const i = +r.dataset.i, v = ST.attrs[i];
+    r.querySelector('output').textContent = v;
+    r.querySelector('.atrBar i').style.width = ((v - ATTR_MIN) / (ATTR_MAX - ATTR_MIN) * 100) + '%';
+    const [dn, up] = r.querySelectorAll('.atrB'); dn.disabled = v <= ATTR_MIN; up.disabled = v >= ATTR_MAX || left <= 0;
+  });
+  const c = $i('atrCnt'); if (c) c.textContent = left > 0 ? `还可分配 ${left} 点` : '点数已用完';
+}
+function syncPortraitStat(){
+  const p = ST.portrait, s = $i('pStat'), up = $i('upBtn'); if (!s) return;
+  let t = '', warn = false, needUp = false;
+  if (!p) t = '未选头像 · 聊天里将使用默认头像「银夜牌手」';
+  else if (p.code && /^avatar-\d$/.test(p.code)) t = `头像码：${p.code}（预设头像）· 聊天里的头像与立绘都会用它`;
+  else if (p.type === 'url') t = '头像码：你的外链图片 · 聊天里的头像与立绘都会用它';
+  else if (p.remote) t = `已生成公网外链 · 聊天里的头像与立绘都会用它${p.tmp ? '（备用图床，仅保留约 72 小时）' : ''}`;
+  else { t = '本地图片只在你这台设备上，聊天里看不到。点「生成公网外链」后才会在每一轮的头像与立绘里使用（图片会公开上传）。'; warn = true; needUp = true; }
+  s.textContent = t; s.classList.toggle('warn', warn); up.hidden = !needUp;
+}
+let UPLOADING = false;
+async function uploadLocal(){
+  const p = ST.portrait;
+  if (!p || p.type !== 'local') return toast('请先选择一张本地图片');
+  if (p.remote) return toast('这张图片已经有公网外链了');
+  if (UPLOADING) return; UPLOADING = true;
+  const btns = [$i('upBtn'), $i('mUp')]; btns.forEach(b => b && (b.disabled = true));
+  toast('正在上传到公共图床……（链接公开，任何人拿到链接都能看到这张图）');
+  const post = async (url, fields, timeout = 30000) => {
+    const ac = new AbortController(), t = setTimeout(() => ac.abort(), timeout);
+    try { const f = new FormData(); for (const [k, v] of fields) f.append(k, ...(Array.isArray(v) ? v : [v])); const r = await fetch(url, { method:'POST', body:f, signal:ac.signal }); return { status:r.status, text:await r.text() }; }
+    finally { clearTimeout(t); }
+  };
+  try {
+    const blob = await (await fetch(p.src)).blob(), name = 'avatar.' + (blob.type.split('/')[1] || 'webp').replace('jpeg', 'jpg');
+    let url = null, tmp = false;
+    try { const r = await post('https://img.scdn.io/api/v1.php', [['image', [blob, name]], ['outputFormat', 'webp']]); const j = JSON.parse(r.text); if (j.success && /^https:\/\//.test(j.url || '')) url = j.url; } catch (_){}
+    if (!url) { try { const r = await post('https://litterbox.catbox.moe/resources/internals/api.php', [['reqtype', 'fileupload'], ['time', '72h'], ['fileToUpload', [blob, name]]]); if (/^https:\/\/\S+$/.test(r.text.trim())) { url = r.text.trim(); tmp = true; } } catch (_){} }
+    if (!url) { toast('上传失败：图床暂时连不上。可以改用「外链图片」，或稍后再试'); return; }
+    p.remote = url; p.tmp = tmp; save(true); syncUI(); toast(tmp ? '已生成外链（备用图床，约 72 小时后失效）' : '已生成公网外链');
+    if ($i('crModal').classList.contains('on')) showModal();
+  } catch (err) { toast('上传失败：' + (err && err.message || '网络错误')); }
+  finally { UPLOADING = false; btns.forEach(b => b && (b.disabled = false)); }
 }
 function readLocal(f){
   if (f.size > 8*1024*1024) return toast('图片太大了（请小于 8MB）');
@@ -167,6 +260,7 @@ function act(a){
   if (a === 'local') return $i('pFile').click();
   if (a === 'url'){ $i('urlRow').classList.toggle('on'); $i('pUrl').focus(); return; }
   if (a === 'clearP'){ ST.portrait = null; syncUI(); return; }
+  if (a === 'upload') return uploadLocal();
   if (a === 'loadUrl'){
     const u = $i('pUrl').value.trim();
     if (!/^https?:\/\//i.test(u)) return toast('请输入 http(s) 开头的图片外链');
@@ -191,17 +285,25 @@ function save(quiet){
 }
 const FIELDS = () => [
   ['名字', ST.name], ['性别', ST.gender === '其他' ? (ST.genderX || '其他') : ST.gender], ['年龄', ST.age], ['种族', ST.race >= 0 ? RACES[ST.race].n : ''],
-  ['职业', ST.job], ['赌运天赋', ST.talents.map(i => `${TALENTS[i].n}（${TALENTS[i].d}）`).join('\n')], ['身材样貌', ST.look], ['身份背景', ST.bg],
-  ['立绘', ST.portrait ? (ST.portrait.type === 'url' ? ST.portrait.src : `本地图片${ST.portrait.name ? '「' + ST.portrait.name + '」' : ''}（不含在文本中）`) : ''],
+  ['职业', ST.job],
+  ['头像码', portraitCode() || DEFAULT_AVATAR],
+  [`六维属性（总点数 ${ATTR_BUDGET}，已分配 ${attrSpent()}）`, ATTRS.map((a, i) => `${a.n} ${ST.attrs[i]}`).join('｜')],
+  ['赌运天赋', ST.talents.map((i, n) => { const t = TALENTS[i]; return `${n + 1}. ${t.n}｜${t.t}｜效果：${t.e}｜触发：${t.g}｜代价：${t.c}`; }).join('\n')],
+  ['身材样貌', ST.look], ['身份背景', ST.bg],
 ];
+const SETTING_NOTE = '（开局真值：下面的头像码、六维属性、赌运天赋必须原样写进状态栏与正文，每一轮都沿用，不得改动或遗忘；头像码是 avatar-1 至 avatar-6 或一条图片链接，每一轮状态栏与主角对白的头像都用它。）';
 function showModal(){
-  const f = FIELDS();
-  $i('mBody').innerHTML = `<div class="pt">${ST.portrait ? `<img src="${esc(ST.portrait.src)}" alt="">` : ''}<b>${esc(ST.name || '无名之客')}</b></div>` +
-    f.filter(([k]) => k !== '名字').map(([k, v]) => `<dt>${k}</dt><dd class="${v ? '' : 'empty'}">${v ? esc(v) : '未填写'}</dd>`).join('');
+  const f = FIELDS(), p = ST.portrait, need = p && p.type === 'local' && !p.remote;
+  const code = portraitCode();
+  $i('mBody').innerHTML = `<div class="pt">${p ? `<img src="${esc(p.src)}" alt="">` : ''}<b>${esc(ST.name || '无名之客')}</b></div>` +
+    f.filter(([k]) => k !== '名字').map(([k, v]) => `<dt>${esc(k)}</dt><dd class="${v ? '' : 'empty'}">${v ? esc(v) : '未填写'}</dd>`).join('') +
+    (need ? `<dt>提醒</dt><dd class="warn">你选的是本地图片，聊天里看不到它。点下方「生成公网外链」把它传到公共图床（链接公开），再复制设定；否则聊天里会先用默认头像。</dd>` : '') +
+    (attrSpent() < ATTR_BUDGET ? `<dt>提醒</dt><dd class="warn">六维属性还有 ${ATTR_BUDGET - attrSpent()} 点没分配，可以回去继续加点。</dd>` : '');
+  $i('mUp').hidden = !need;
   $i('crModal').classList.add('on'); sfx.shimmer(); sfx.seal();
 }
 function copyText(){
-  const txt = '【新濠蜃楼城 · 角色设定】\n' + FIELDS().map(([k, v]) => `${k}：${v ? (String(v).includes('\n') ? '\n' + v : v) : '（未填写）'}`).join('\n');
+  const txt = '【新濠蜃楼城 · 角色设定】\n' + SETTING_NOTE + '\n' + FIELDS().map(([k, v]) => `${k}：${v ? (String(v).includes('\n') ? '\n' + v : v) : '（未填写）'}`).join('\n');
   const ok = () => { toast('已复制全部设定'); sfx.ting(); };
   const fallback = () => { const t = document.createElement('textarea'); t.value = txt; t.style.cssText = 'position:fixed;left:-9999px'; document.body.appendChild(t); t.select();
     try { document.execCommand('copy') ? ok() : toast('复制失败，请手动选择文本'); } catch (_){ toast('复制失败，请手动选择文本'); } t.remove(); };
